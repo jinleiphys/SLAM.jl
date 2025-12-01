@@ -152,11 +152,11 @@ function solve_scattering(prob::ScatteringProblem)
     # H⁺_l(kR) = G_l + i*F_l
     H_plus_R = coulomb_H_plus(l, η, ρ_R)
 
-    # Scattering amplitude: f_l = φ(R) / H⁺_l(kR)
-    f_l = φ_R / H_plus_R
+    # Scattering amplitude: f_l = φ(R) / [k * H⁺_l(kR)]
+    f_l = φ_R / (k * H_plus_R)
 
-    # S-matrix: S_l = 1 + 2i*f_l
-    S_l = 1.0 + 2.0im * f_l
+    # S-matrix: S_l = 1 + 2ik*f_l
+    S_l = 1.0 + 2.0im * k * f_l
 
     # Phase shift: S_l = exp(2iδ_l)
     δ_l = -0.5im * log(S_l)
