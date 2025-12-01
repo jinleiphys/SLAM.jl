@@ -1,0 +1,20 @@
+name = "SLAM"
+uuid = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+authors = ["jinlei <jinlei.phys@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
+
+[compat]
+julia = "1.6"
+FastGaussQuadrature = "0.5, 1"
+SpecialFunctions = "2"
