@@ -54,6 +54,7 @@ include("baye_matrices.jl")
 include("coulomb.jl")
 include("potentials.jl")
 include("scattering.jl")
+include("numerov.jl")
 
 # Module initialization
 function __init__()
@@ -86,5 +87,13 @@ export solve_scattering, SMatrix, cross_section
 export solve_all_partial_waves
 export elastic_differential_cross_section
 export legendre_P
+
+# Export wave function functions
+export WaveFunctionResult
+export solve_wavefunction, evaluate_wavefunction
+
+# Export Numerov functions
+export NumerovResult
+export solve_numerov, compare_numerov_lagrange
 
 end # module SLAM

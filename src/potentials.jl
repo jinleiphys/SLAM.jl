@@ -153,8 +153,8 @@ end
 Compute the reduced mass in MeV/c² from the optical potential parameters.
 """
 function reduced_mass(pot::OpticalPotential)
-    # AMU to MeV/c²
-    amu = 931.5  # MeV/c²
+    # AMU to MeV/c² (matching COLOSS value)
+    amu = 931.49432  # MeV (NIST)
     m_proj = pot.A_proj * amu
     m_targ = pot.A_targ * amu
     return m_proj * m_targ / (m_proj + m_targ)
@@ -164,8 +164,13 @@ end
     woods_saxon(r::Float64, R::Float64, a::Float64) -> Float64
 
 Woods-Saxon form factor: f(r) = 1 / (1 + exp((r-R)/a))
+
+Returns 0 if a ≈ 0 (degenerate case).
 """
 function woods_saxon(r::Float64, R::Float64, a::Float64)
+    if abs(a) < 1e-10
+        return 0.0  # Degenerate case: no form factor
+    end
     x = (r - R) / a
     if x > 700  # Prevent overflow
         return 0.0
@@ -180,8 +185,13 @@ end
     woods_saxon_derivative(r::Float64, R::Float64, a::Float64) -> Float64
 
 Derivative of Woods-Saxon form factor: df/dr = -f(1-f)/a
+
+Returns 0 if a ≈ 0 (degenerate case).
 """
 function woods_saxon_derivative(r::Float64, R::Float64, a::Float64)
+    if abs(a) < 1e-10
+        return 0.0  # Degenerate case: no derivative
+    end
     f = woods_saxon(r, R, a)
     return -f * (1.0 - f) / a
 end
@@ -262,9 +272,8 @@ function evaluate_coulomb(pot::OpticalPotential, r::Float64)
     a13 = pot.A1^(1/3) + pot.A2^(1/3)
     R_c = pot.r_c * a13
 
-    # e²/ℏc ≈ 1/137 and ℏc ≈ 197.3 MeV·fm
-    # So e² ≈ 1.44 MeV·fm
-    e2 = 1.44  # MeV·fm
+    # e² = 1.43997 MeV·fm (matching COLOSS value)
+    e2 = 1.43997  # MeV·fm
 
     Z12 = pot.Z_proj * pot.Z_targ
 
@@ -278,10 +287,23 @@ end
 """
     evaluate_short_range(pot::OpticalPotential, r::Float64, l::Int, j::Float64) -> ComplexF64
 
-Evaluate the short-range potential (nuclear + Coulomb modification) at radius r.
+Evaluate the short-range potential at radius r.
 
-This is the potential that appears in the inhomogeneous term of the
-scattering equation after separating out the Coulomb asymptotic behavior.
+For scattering with Coulomb, the inhomogeneous equation uses Coulomb wave functions
+F_l(η, kr) which already include the point Coulomb potential Z₁Z₂e²/r.
+Therefore the short-range potential is:
+
+    V_short = V_nuclear + V_coulomb_finite - V_coulomb_point
+
+where:
+- V_nuclear: optical model potential (volume, surface, spin-orbit)
+- V_coulomb_finite: finite-size Coulomb potential (uniform sphere model)
+- V_coulomb_point: point Coulomb potential Z₁Z₂e²/r
+
+This ensures the scattering equation:
+    [-d²/dr² + l(l+1)/r² + U_short - k²]φ = U_short * F_l(η, kr)
+
+uses the correct short-range potential with Coulomb asymptotics in F_l.
 
 # Arguments
 - `pot::OpticalPotential`: Potential parameters
@@ -293,12 +315,27 @@ scattering equation after separating out the Coulomb asymptotic behavior.
 - `ComplexF64`: Short-range potential (MeV)
 """
 function evaluate_short_range(pot::OpticalPotential, r::Float64, l::Int, j::Float64)
-    # Nuclear potential
+    # Nuclear optical potential
     V_nuc = evaluate_potential(pot, r, l, j)
 
-    # For the inhomogeneous equation, we need the difference from pure Coulomb
-    # In the classically forbidden region, we use the nuclear potential directly
-    return V_nuc
+    # For charged particle scattering, we need to subtract the point Coulomb
+    # because the Coulomb wave functions F_l(η, kr) already include it
+    Z12 = pot.Z_proj * pot.Z_targ
+
+    if abs(Z12) > 1e-10 && r > 1e-10
+        # Finite-size Coulomb potential
+        V_coul_finite = evaluate_coulomb(pot, r)
+
+        # Point Coulomb potential: e²Z₁Z₂/r
+        e2 = 1.43997  # MeV·fm (matching COLOSS)
+        V_coul_point = e2 * Z12 / r
+
+        # Short-range = nuclear + (finite Coulomb - point Coulomb)
+        return V_nuc + V_coul_finite - V_coul_point
+    else
+        # No Coulomb: short-range is just the nuclear potential
+        return V_nuc
+    end
 end
 
 """
