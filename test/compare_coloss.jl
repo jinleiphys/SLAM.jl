@@ -1,16 +1,16 @@
-# Compare SLAM.jl results with COLOSS Fortran results
-# Test case: test_method5_noCoulomb_theta0.in
+# Neutron scattering validation test for SLAM.jl
+# Test case: n + 40Target at Elab = 20 MeV (no Coulomb)
 
 using SLAM
 using Printf
 
 function main()
     println("=" ^ 70)
-    println("SLAM.jl vs COLOSS Comparison")
+    println("SLAM.jl Neutron Scattering Validation")
     println("Test: n + 40Target at Elab = 20 MeV (no Coulomb)")
     println("=" ^ 70)
 
-    # Parameters from the input file
+    # Parameters
     # zp=0, zt=0 (no Coulomb)
     # massp=1, masst=40
     # elab=20, sp=0.5
@@ -39,8 +39,8 @@ function main()
         Z_targ=0.0, A_targ=A_targ
     )
 
-    # COLOSS results for comparison
-    coloss_results = [
+    # Reference results for validation
+    reference_results = [
         # (l, s, j, Re(S), Im(S), σ_partial)
         (0, 0.5, 0.5, 0.349464, 0.223937, 28.5507),
         (1, 0.5, 0.5, 0.507241, 0.094951, 25.3072),
@@ -64,14 +64,14 @@ function main()
         (10, 0.5, 9.5, 0.999842, 0.000664, 0.1092),
     ]
 
-    println("  L    S      J  |  COLOSS S-matrix        |  SLAM S-matrix          |  Δ|S|     ΔRe(S)   ΔIm(S)")
+    println("  L    S      J  |  Reference S-matrix     |  SLAM S-matrix          |  Δ|S|     ΔRe(S)   ΔIm(S)")
     println("-" ^ 100)
 
     total_diff_re = 0.0
     total_diff_im = 0.0
     n_channels = 0
 
-    for (l, s, j, re_coloss, im_coloss, σ_coloss) in coloss_results
+    for (l, s, j, re_ref, im_ref, σ_ref) in reference_results
         # Solve with SLAM
         prob = ScatteringProblem(pot, E_cm, l; j=j, N=60, R=20.0)
         result = solve_scattering(prob)
@@ -80,19 +80,19 @@ function main()
         re_slam = real(S_slam)
         im_slam = imag(S_slam)
 
-        S_coloss = complex(re_coloss, im_coloss)
+        S_ref = complex(re_ref, im_ref)
 
         # Compute differences
-        diff_re = re_slam - re_coloss
-        diff_im = im_slam - im_coloss
-        diff_abs = abs(S_slam) - abs(S_coloss)
+        diff_re = re_slam - re_ref
+        diff_im = im_slam - im_ref
+        diff_abs = abs(S_slam) - abs(S_ref)
 
         total_diff_re += abs(diff_re)
         total_diff_im += abs(diff_im)
         n_channels += 1
 
         @printf("  %d   %.1f   %.1f  |  (%8.5f, %8.5f)  |  (%8.5f, %8.5f)  |  %+.4f  %+.5f  %+.5f\n",
-                l, s, j, re_coloss, im_coloss, re_slam, im_slam, diff_abs, diff_re, diff_im)
+                l, s, j, re_ref, im_ref, re_slam, im_slam, diff_abs, diff_re, diff_im)
     end
 
     println("-" ^ 100)
@@ -105,9 +105,9 @@ function main()
     println("\nDetailed comparison for l=0:")
     prob = ScatteringProblem(pot, E_cm, 0; j=0.5, N=60, R=20.0)
     result = solve_scattering(prob)
-    println("  SLAM:   S = $(result.S_matrix)")
-    println("  COLOSS: S = $(complex(0.349464, 0.223937))")
-    @printf("  |S|_SLAM = %.6f, |S|_COLOSS = %.6f\n",
+    println("  SLAM:      S = $(result.S_matrix)")
+    println("  Reference: S = $(complex(0.349464, 0.223937))")
+    @printf("  |S|_SLAM = %.6f, |S|_ref = %.6f\n",
             abs(result.S_matrix), abs(complex(0.349464, 0.223937)))
 end
 

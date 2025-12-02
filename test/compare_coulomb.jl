@@ -32,7 +32,7 @@ function main()
         r_c=1.25,
         Z_proj=Z_proj, A_proj=A_proj,
         Z_targ=Z_targ, A_targ=A_targ,
-        A1=0.0, A2=0.0  # COLOSS convention
+        A1=0.0, A2=0.0
     )
 
     # Physical parameters
@@ -57,7 +57,7 @@ function main()
     println("  r (fm)   V_nuc (MeV)    V_coul_finite   V_coul_point   V_short")
     println("-" ^ 70)
 
-    a13 = A_targ^(1/3)  # COLOSS convention
+    a13 = A_targ^(1/3)
     R_c = 1.25 * a13
     println("  Coulomb radius R_c = $(round(R_c, digits=3)) fm")
     println()
@@ -119,10 +119,8 @@ function main()
     end
 
     println()
-    println("Note: The current Method 5 with theta=0 (no complex scaling)")
-    println("may have issues with Coulomb scattering near the boundary.")
-    println("For charged particle scattering, complex scaling (Method 1/2)")
-    println("or larger integration radius may be needed.")
+    println("Note: For charged particle scattering, complex scaling")
+    println("or larger integration radius may be needed for better accuracy.")
 end
 
 main()

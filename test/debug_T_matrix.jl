@@ -1,4 +1,4 @@
-# Debug: Compare T matrix between SLAM.jl and COLOSS formula
+# Debug: Compare T matrix between SLAM.jl and Baye formula
 using SLAM
 
 function main()

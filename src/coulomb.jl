@@ -46,7 +46,6 @@ where k = √(2μE)/ℏ is the wave number.
 - `Float64`: Sommerfeld parameter η
 """
 function coulomb_eta(Z1::Float64, Z2::Float64, μ::Float64, E::Float64)
-    # Constants matching COLOSS values
     # η = Z₁ Z₂ e² μ / (ℏ² k) = Z₁ Z₂ e² μ / (ℏc × ℏ k)
     # where k = √(2μE)/ℏc
     # So η = Z₁ Z₂ e² μ / (ℏc² k)
@@ -64,7 +63,7 @@ Compute the wave number k for given reduced mass and energy.
 k = √(2μE) / ℏc  [in fm⁻¹]
 """
 function coulomb_k(μ::Float64, E::Float64)
-    ℏc = 197.3269718  # MeV·fm (NIST 2014, matching COLOSS)
+    ℏc = 197.3269718  # MeV·fm (NIST 2014)
     return sqrt(2 * μ * E) / ℏc
 end
 

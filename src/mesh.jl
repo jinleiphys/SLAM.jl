@@ -3,7 +3,7 @@
 
 Uses Gauss-Legendre quadrature points on (0,1) scaled to (0,R).
 
-For Baye's Method 5, the x-regularized basis functions are:
+The x-regularized basis functions are:
 f_j(r) = (r/r_j) * L_j(r) / √λ_j
 
 where L_j(r) is the standard Lagrange polynomial satisfying L_j(r_k) = δ_{jk}

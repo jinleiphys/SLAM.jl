@@ -110,7 +110,6 @@ using SLAM
 
     @testset "Scattering Solver" begin
         # Set up a simple scattering problem (neutron scattering, no Coulomb)
-        # Use A1=0, A2=0 to follow COLOSS convention (uses A_targ for radius)
         pot = OpticalPotential(
             V_v=50.0, r_v=1.25, a_v=0.65,
             W_v=10.0, r_wv=1.25, a_wv=0.65,

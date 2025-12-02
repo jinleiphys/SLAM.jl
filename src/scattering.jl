@@ -1,9 +1,7 @@
 """
-    Main scattering solver using Baye's method with Lagrange-Legendre basis.
+    Main scattering solver using Lagrange-Legendre basis with exact D and T matrices.
 
-Implements Method 5: Baye's exact D and T matrices acting on expansion coefficients.
-
-Key insight: Baye's D and T matrices act on expansion coefficients c_j,
+Key insight: The D and T matrices act on expansion coefficients c_j,
 NOT on function values φ(x_j)!
 
 For x-regularized basis: f_j(r) = (r/r_j) * L_j(r) / √λ_j
@@ -14,8 +12,8 @@ So: c_j = φ(r_j) * √λ_j
 Reference: D. Baye, Physics Reports 565 (2015) 1-107, Section 3.4.5
 """
 
-# Physical constants (matching COLOSS values)
-const HBARC = 197.3269718  # MeV·fm (NIST 2014)
+# Physical constants (NIST 2014 values)
+const HBARC = 197.3269718  # MeV·fm
 
 """
     ScatteringProblem
@@ -64,7 +62,7 @@ end
 """
     solve_scattering(prob::ScatteringProblem) -> ScatteringResult
 
-Solve the scattering problem using Method 5 (Baye's coefficient-space formulation).
+Solve the scattering problem using Lagrange mesh with coefficient-space formulation.
 
 The radial Schrödinger equation:
 [-ℏ²/(2μ) d²/dr² + ℏ²l(l+1)/(2μr²) + V(r)]φ = Eφ
@@ -78,14 +76,13 @@ For Coulomb scattering, we decompose the wave function:
 The scattered wave satisfies:
 [-d²/dr² + l(l+1)/r² + U_full - k²]ψ_sc = U_short * F_l(η, kr)
 
-Key insight from COLOSS Method 5:
+Key points:
 - Matrix M uses FULL potential: U_full = U_nuc + U_coul_finite
 - Source term b uses SHORT-RANGE potential: U_short = U_nuc + U_coul_finite - U_coul_point
 - Phase factors e^{iσ_l} cancel out in this formulation
 - S-matrix: S = 1 + 2ik*f_l (no extra phase factor)
 
 Reference: D. Baye, Physics Reports 565 (2015) 1-107
-           COLOSS Method 5 implementation (2025-12-01 fix)
 """
 function solve_scattering(prob::ScatteringProblem)
     pot = prob.pot
@@ -122,7 +119,6 @@ function solve_scattering(prob::ScatteringProblem)
         r_i = mesh.r[i]
         ρ_i = k * r_i
 
-        # COLOSS Method 5 fix:
         # Matrix uses FULL potential: V_full = V_nuc + V_coul_finite
         # Source uses SHORT-RANGE potential: V_short = V_nuc + V_coul_finite - V_coul_point
         V_full_i = evaluate_total_potential(pot, r_i, l, j)
@@ -172,11 +168,9 @@ function solve_scattering(prob::ScatteringProblem)
 
     # Scattering amplitude: f_l = φ_sc(R) / [k * H⁺_l(kR)]
     # Note: No exp(iσ_l) factor needed - phases cancel in this formulation
-    # This is consistent with COLOSS Method 5 implementation
     f_l = φ_R / (k * H_plus_R)
 
     # S-matrix: S_l = 1 + 2ik*f_l
-    # Note: No exp(2iσ_l) factor - same formula as Method 1 (Lagrange-Laguerre)
     # The phase factors are absorbed in the definition of f_l
     S_l = 1.0 + 2.0im * k * f_l
 

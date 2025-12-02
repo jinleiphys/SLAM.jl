@@ -1,4 +1,4 @@
-# Direct matrix element comparison between SLAM.jl and COLOSS
+# Direct matrix element comparison for SLAM.jl debugging
 # Same parameters, compare element by element
 
 using SLAM
@@ -9,8 +9,8 @@ function main()
     println("DIRECT MATRIX ELEMENT COMPARISON")
     println("=" ^ 70)
 
-    # EXACT same parameters as COLOSS test case
-    # massp=1, masst=40, a1=0, a2=0 (so COLOSS uses a13 = 40^(1/3))
+    # Test parameters
+    # massp=1, masst=40, a1=0, a2=0 (so uses a13 = 40^(1/3))
     # zp=0, zt=0, elab=20
 
     E_lab = 20.0
@@ -18,16 +18,16 @@ function main()
     A_targ = 40.0
     E_cm = E_lab * A_targ / (A_proj + A_targ)
 
-    # COLOSS convention: a1=0, a2=0 means use a13 = masst^(1/3) = 40^(1/3)
-    a13_coloss = 40.0^(1/3)
-    println("COLOSS a13 = 40^(1/3) = $a13_coloss")
+    # Default convention: a1=0, a2=0 means use a13 = masst^(1/3) = 40^(1/3)
+    a13_default = 40.0^(1/3)
+    println("Default a13 = 40^(1/3) = $a13_default")
 
     # What SLAM uses with default (A1=0, A2=A_targ=40)
     a13_slam = 0.0^(1/3) + 40.0^(1/3)
     println("SLAM a13 = 0^(1/3) + 40^(1/3) = $a13_slam")
     println()
 
-    # Create potential with COLOSS convention
+    # Create potential with default convention
     pot = OpticalPotential(
         V_v=46.553, r_v=1.185, a_v=0.672,
         W_v=1.777, r_wv=1.185, a_wv=0.672,
@@ -38,7 +38,7 @@ function main()
         r_c=0.0,
         Z_proj=0.0, A_proj=A_proj,
         Z_targ=0.0, A_targ=A_targ,
-        A1=0.0, A2=0.0  # This should trigger COLOSS convention
+        A1=0.0, A2=0.0  # Default convention
     )
 
     println("pot.A1 = $(pot.A1), pot.A2 = $(pot.A2)")
@@ -61,7 +61,7 @@ function main()
     println("  coeff_kin = $coeff_kin MeV·fm²")
     println()
 
-    # Same mesh as COLOSS
+    # Same mesh
     N = 60
     R = 20.0
     l = 0
@@ -118,8 +118,6 @@ function main()
     println("S-matrix result:")
     println("  S = $(result.S_matrix)")
     println("  |S| = $(abs(result.S_matrix))")
-    println()
-    println("Expected COLOSS (l=0, j=0.5): S = (0.349464, 0.223937)")
 end
 
 main()

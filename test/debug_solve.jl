@@ -28,7 +28,7 @@ function main()
 
     l = 0
     j = 0.5
-    N = 60  # Same as COLOSS
+    N = 60
     R = 20.0
 
     # Constants
@@ -159,10 +159,8 @@ function main()
     println("  f_l = φ(R) / H⁺(kR) = $f_l")
     println("  S_l = 1 + 2i*f_l = $S_l")
     println("  |S_l| = $(abs(S_l))")
-    println()
-    println("Expected COLOSS: S = (0.349464, 0.223937)")
 
-    # Let me also try a different approach - using the asymptotic form
+    # Alternative analysis
     println()
     println("=" ^ 70)
     println("Alternative analysis:")

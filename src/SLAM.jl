@@ -1,20 +1,17 @@
 """
     SLAM.jl - Scattering Lagrange Asymptotic Matching
 
-A Julia package for solving scattering problems using Lagrange mesh methods
-with Baye's exact differential matrices operating on expansion coefficients.
-
-## Method
-This package implements Method 5 from COLOSS: Baye's exact D and T matrices
-acting directly on expansion coefficients in a Lagrange-Legendre basis.
+A Julia package for solving nuclear scattering problems using Lagrange mesh methods
+with exact differential matrices operating on expansion coefficients.
 
 Key features:
 - Lagrange-Legendre mesh on (0, R) using Gauss-Legendre quadrature
-- Baye's analytical formulas for first and second derivative matrices
+- Analytical formulas for first and second derivative matrices (D and T)
 - x-regularized basis functions: f_j(r) = α_j * r * L_j(r/R)
 - Coefficient-space formulation for proper matrix action
 - Outgoing wave boundary condition using Coulomb-Hankel functions
 - COUL90 Fortran library integration for accurate Coulomb functions
+- Woods-Saxon optical model potentials with spin-orbit coupling
 
 ## References
 - D. Baye, Physics Reports 565 (2015) 1-107

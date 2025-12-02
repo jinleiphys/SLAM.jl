@@ -6,7 +6,7 @@ function main()
     println("Potential value debug")
     println("=" ^ 70)
 
-    # Test parameters (same as compare_coloss.jl)
+    # Test parameters
     pot = OpticalPotential(
         V_v=46.553, r_v=1.185, a_v=0.672,
         W_v=1.777, r_wv=1.185, a_wv=0.672,
@@ -110,53 +110,46 @@ function main()
 
     println()
     println("=" ^ 70)
-    println("What COLOSS should compute (from the Fortran code):")
+    println("Potential calculation details:")
     println("=" ^ 70)
     println()
 
-    # From COLOSS eval_nuclear_potential5:
-    # V_central = -Vv_p * f_v - iu * Wv_p * f_wv
-    # V_surface = 4*Vs_p*avs_p*df_s + 4i*Ws_p*aws_p*df_ws
-    # V_so_term = 2*Vso_p*df_so*ls + 2i*Wso_p*df_wso*ls
-    # V_nuc = V_central + V_surface + V_so_term
+    # Verify Woods-Saxon derivative formula
+    V_central = -pot.V_v * f_v - im * pot.W_v * f_wv
+    println("V_central = $V_central")
 
-    V_central_coloss = -pot.V_v * f_v - im * pot.W_v * f_wv
-    println("V_central = $V_central_coloss")
-
-    # COLOSS uses a different df formula:
-    # df_s = -exp((r - R_s)/avs_p) / avs_p / (1 + exp((r - R_s)/avs_p))^2
-    # This is equivalent to: df_s = -f*(1-f)/a where f = 1/(1+exp(x))
-    # Let me verify:
+    # Woods-Saxon derivative: df/dr = -exp((r-R)/a)/a/(1+exp((r-R)/a))^2
+    # This is equivalent to: df/dr = -f*(1-f)/a where f = 1/(1+exp(x))
     x_ws = (r - R_ws) / pot.a_ws
     exp_x = exp(x_ws)
-    df_ws_coloss = -exp_x / pot.a_ws / (1 + exp_x)^2
+    df_ws_formula = -exp_x / pot.a_ws / (1 + exp_x)^2
 
-    println("df_ws (SLAM woods_saxon_derivative) = $(df_ws)")
-    println("df_ws (COLOSS formula) = $(df_ws_coloss)")
+    println("df_ws (woods_saxon_derivative) = $(df_ws)")
+    println("df_ws (formula) = $(df_ws_formula)")
 
-    V_surface_coloss = 4.0 * im * pot.W_s * pot.a_ws * df_ws_coloss
-    println("V_surface = $V_surface_coloss")
+    V_surface_calc = 4.0 * im * pot.W_s * pot.a_ws * df_ws_formula
+    println("V_surface = $V_surface_calc")
 
     # Spin-orbit
     x_so = (r - R_so) / pot.a_so
     exp_so = exp(x_so)
-    df_so_coloss = -exp_so / pot.a_so / (1 + exp_so)^2 / r
+    df_so_formula = -exp_so / pot.a_so / (1 + exp_so)^2 / r
 
     x_wso = (r - R_wso) / pot.a_wso
     exp_wso = exp(x_wso)
-    df_wso_coloss = -exp_wso / pot.a_wso / (1 + exp_wso)^2 / r
+    df_wso_formula = -exp_wso / pot.a_wso / (1 + exp_wso)^2 / r
 
     println("df_so (SLAM) = $(df_so)")
-    println("df_so (COLOSS) = $(df_so_coloss)")
+    println("df_so (formula) = $(df_so_formula)")
 
-    V_so_coloss = 2.0 * pot.V_so * df_so_coloss * ls + 2.0 * im * pot.W_so * df_wso_coloss * ls
-    println("V_so = $V_so_coloss")
+    V_so_calc = 2.0 * pot.V_so * df_so_formula * ls + 2.0 * im * pot.W_so * df_wso_formula * ls
+    println("V_so = $V_so_calc")
 
-    V_nuc_coloss = V_central_coloss + V_surface_coloss + V_so_coloss
+    V_nuc_calc = V_central + V_surface_calc + V_so_calc
     println()
-    println("V_nuc (COLOSS) = $V_nuc_coloss")
-    println("V_nuc (SLAM)   = $V_from_func")
-    println("Difference = $(V_nuc_coloss - V_from_func)")
+    println("V_nuc (calculated) = $V_nuc_calc")
+    println("V_nuc (SLAM)       = $V_from_func")
+    println("Difference = $(V_nuc_calc - V_from_func)")
 end
 
 main()

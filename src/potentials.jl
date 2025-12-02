@@ -54,7 +54,7 @@ U(r) = V_central(r) + V_surface(r) + V_spin_orbit(r) + V_coulomb(r)
 - `A2::Float64`: Mass number for radius factor (target side), defaults to A_targ
 
 Note: Radii are calculated as R = r * (A1^(1/3) + A2^(1/3))
-Following COLOSS convention: if A1=A2=0, uses A1=0 and A2=A_targ.
+Default convention: if A1=A2=0, uses A1=0 and A2=A_targ.
 """
 struct OpticalPotential
     # Volume terms
@@ -90,7 +90,7 @@ struct OpticalPotential
     Z_targ::Float64
     A_targ::Float64
 
-    # Radius calculation masses (COLOSS convention)
+    # Radius calculation masses
     A1::Float64
     A2::Float64
 end
@@ -101,7 +101,7 @@ end
 Construct an optical potential with keyword arguments.
 Default values are zero for all potential depths and 1.25 fm for radius parameters.
 
-## COLOSS Convention for Radius Calculation
+## Radius Calculation Convention
 - If A1 and A2 are not specified (or both zero), uses A1=0 and A2=A_targ
 - Radii are calculated as R = r_param * (A1^(1/3) + A2^(1/3))
 """
@@ -117,7 +117,7 @@ function OpticalPotential(;
     Z_targ=20.0, A_targ=40.0,
     A1=nothing, A2=nothing  # Radius calculation masses
 )
-    # Apply COLOSS convention: if A1=A2=0 or not specified, use A1=0, A2=A_targ
+    # Default convention: if A1=A2=0 or not specified, use A1=0, A2=A_targ
     if A1 === nothing && A2 === nothing
         A1_val = 0.0
         A2_val = A_targ
@@ -128,7 +128,7 @@ function OpticalPotential(;
         A1_val = Float64(A1)
         A2_val = A_targ
     else
-        # Both specified - apply COLOSS convention if both zero
+        # Both specified - apply default convention if both zero
         if A1 == 0.0 && A2 == 0.0
             A1_val = 0.0
             A2_val = A_targ
@@ -153,8 +153,8 @@ end
 Compute the reduced mass in MeV/c² from the optical potential parameters.
 """
 function reduced_mass(pot::OpticalPotential)
-    # AMU to MeV/c² (matching COLOSS value)
-    amu = 931.49432  # MeV (NIST)
+    # AMU to MeV/c² (NIST value)
+    amu = 931.49432  # MeV
     m_proj = pot.A_proj * amu
     m_targ = pot.A_targ * amu
     return m_proj * m_targ / (m_proj + m_targ)
@@ -213,7 +213,7 @@ Returns the complex potential U(r) = V(r) - i*W(r) where V is real and W is abso
 - `ComplexF64`: Complex potential value (MeV)
 """
 function evaluate_potential(pot::OpticalPotential, r::Float64, l::Int, j::Float64)
-    # Compute radius factor: A1^{1/3} + A2^{1/3} (following COLOSS convention)
+    # Compute radius factor: A1^{1/3} + A2^{1/3}
     a13 = pot.A1^(1/3) + pot.A2^(1/3)
 
     # Compute radii
@@ -230,13 +230,13 @@ function evaluate_potential(pot::OpticalPotential, r::Float64, l::Int, j::Float6
     V_volume = -pot.V_v * f_v - im * pot.W_v * f_wv
 
     # Surface term: 4*a * df/dr
-    # COLOSS convention: V_surface = 4*V_s*a*df + 4i*W_s*a*df
+    # V_surface = 4*V_s*a*df + 4i*W_s*a*df
     # where df = -exp(x)/a/(1+exp(x))^2 < 0
     df_s = woods_saxon_derivative(r, R_s, pot.a_s)
     df_ws = woods_saxon_derivative(r, R_ws, pot.a_ws)
     V_surface = 4.0 * pot.V_s * pot.a_s * df_s + im * 4.0 * pot.W_s * pot.a_ws * df_ws
 
-    # Spin-orbit term (COLOSS convention):
+    # Spin-orbit term:
     # V_so = 2 * V_so * df_so/r * ls + 2i * W_so * df_wso/r * ls
     # where ls = [J(J+1) - l(l+1) - S(S+1)] / 2
     s = 0.5
@@ -272,8 +272,8 @@ function evaluate_coulomb(pot::OpticalPotential, r::Float64)
     a13 = pot.A1^(1/3) + pot.A2^(1/3)
     R_c = pot.r_c * a13
 
-    # e² = 1.43997 MeV·fm (matching COLOSS value)
-    e2 = 1.43997  # MeV·fm
+    # e² = 1.43997 MeV·fm
+    e2 = 1.43997
 
     Z12 = pot.Z_proj * pot.Z_targ
 
@@ -327,7 +327,7 @@ function evaluate_short_range(pot::OpticalPotential, r::Float64, l::Int, j::Floa
         V_coul_finite = evaluate_coulomb(pot, r)
 
         # Point Coulomb potential: e²Z₁Z₂/r
-        e2 = 1.43997  # MeV·fm (matching COLOSS)
+        e2 = 1.43997  # MeV·fm
         V_coul_point = e2 * Z12 / r
 
         # Short-range = nuclear + (finite Coulomb - point Coulomb)

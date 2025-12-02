@@ -1,4 +1,4 @@
-# Debug script to compare intermediate values between SLAM.jl and COLOSS
+# Debug script to compare intermediate values in SLAM.jl
 using SLAM
 using Printf
 
@@ -171,9 +171,6 @@ function main()
     @printf("H⁺(kR) = (%.10f, %.10f)\n", real(H_plus_R), imag(H_plus_R))
     @printf("f_l = (%.10f, %.10f)\n", real(f_l), imag(f_l))
     @printf("S_l = (%.10f, %.10f), |S| = %.10f\n", real(S_l), imag(S_l), abs(S_l))
-    println()
-
-    println("Expected COLOSS value: S = (0.349464, 0.223937), |S| = 0.415")
 end
 
 main()
