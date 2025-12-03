@@ -170,15 +170,15 @@ plt.close(fig2)
 print('Saved: p12C_argand.pdf and .eps')
 
 # =============================================================================
-# Plot 3: Wave functions (double column width for 2x2 panels)
+# Plot 3: Wave functions (single column width for 2x2 panels)
 # =============================================================================
 
 l_compare_reduced = [0, 5]
-fig3, axes3 = plt.subplots(2, 2, figsize=(7.0, 5.5))
-plt.subplots_adjust(hspace=0.12, wspace=0.30, left=0.10, right=0.97, top=0.92, bottom=0.10)
+fig3, axes3 = plt.subplots(2, 2, figsize=(3.4, 3.2))
+plt.subplots_adjust(hspace=0.12, wspace=0.35, left=0.15, right=0.97, top=0.90, bottom=0.12)
 
 # Add centered title at top
-fig3.suptitle(sys_info, fontsize=12, fontweight='bold')
+fig3.suptitle(sys_info, fontsize=11, fontweight='bold')
 
 for i, l in enumerate(l_compare_reduced):
     # Get data
@@ -194,41 +194,41 @@ for i, l in enumerate(l_compare_reduced):
 
     # Real part
     ax_re = axes3[i, 0]
-    ax_re.plot(r_num, psi_num_re, '-', color=col_num, linewidth=1.2,
+    ax_re.plot(r_num, psi_num_re, '-', color=col_num, linewidth=0.8,
                label='Numerov' if i == 0 else '')
-    ax_re.scatter(r_slam, psi_slam_re, s=15, color=col_dbmm, marker='o',
+    ax_re.scatter(r_slam, psi_slam_re, s=8, color=col_dbmm, marker='o',
                   label='DBMM' if i == 0 else '', zorder=5, edgecolors='none')
-    ax_re.axhline(0, color='gray', linewidth=0.5, linestyle='--', zorder=1)
+    ax_re.axhline(0, color='gray', linewidth=0.4, linestyle='--', zorder=1)
     ax_re.set_xlim(0, 15)
-    ax_re.set_ylabel(rf'Re[$\psi_{l}(r)$]', fontsize=11)
-    ax_re.tick_params(axis='both', labelsize=10)
+    ax_re.set_ylabel(rf'Re[$\psi_{l}(r)$]', fontsize=9)
+    ax_re.tick_params(axis='both', labelsize=8)
     ax_re.xaxis.set_minor_locator(AutoMinorLocator())
     ax_re.yaxis.set_minor_locator(AutoMinorLocator())
-    ax_re.text(0.03, 0.90, panel_labels[i*2], transform=ax_re.transAxes,
-               fontsize=11, fontweight='bold')
+    ax_re.text(0.05, 0.88, panel_labels[i*2], transform=ax_re.transAxes,
+               fontsize=9, fontweight='bold')
     if i == 1:
-        ax_re.set_xlabel(r'$r$ [fm]', fontsize=11)
+        ax_re.set_xlabel(r'$r$ [fm]', fontsize=9)
     else:
         ax_re.tick_params(labelbottom=False)
 
     # Imaginary part
     ax_im = axes3[i, 1]
-    ax_im.plot(r_num, psi_num_im, '-', color=col_num, linewidth=1.2,
+    ax_im.plot(r_num, psi_num_im, '-', color=col_num, linewidth=0.8,
                label='Numerov' if i == 1 else '')
-    ax_im.scatter(r_slam, psi_slam_im, s=15, color=col_dbmm, marker='o',
+    ax_im.scatter(r_slam, psi_slam_im, s=8, color=col_dbmm, marker='o',
                   zorder=5, edgecolors='none', label='DBMM' if i == 1 else '')
-    ax_im.axhline(0, color='gray', linewidth=0.5, linestyle='--', zorder=1)
+    ax_im.axhline(0, color='gray', linewidth=0.4, linestyle='--', zorder=1)
     ax_im.set_xlim(0, 15)
-    ax_im.set_ylabel(rf'Im[$\psi_{l}(r)$]', fontsize=11)
-    ax_im.tick_params(axis='both', labelsize=10)
+    ax_im.set_ylabel(rf'Im[$\psi_{l}(r)$]', fontsize=9)
+    ax_im.tick_params(axis='both', labelsize=8)
     ax_im.xaxis.set_minor_locator(AutoMinorLocator())
     ax_im.yaxis.set_minor_locator(AutoMinorLocator())
-    ax_im.text(0.03, 0.90, panel_labels[i*2+1], transform=ax_im.transAxes,
-               fontsize=11, fontweight='bold')
+    ax_im.text(0.05, 0.88, panel_labels[i*2+1], transform=ax_im.transAxes,
+               fontsize=9, fontweight='bold')
     if i == 1:
         ax_im.legend(loc='lower left', frameon=True, fancybox=False,
-                     edgecolor='black', framealpha=1, fontsize=9)
-        ax_im.set_xlabel(r'$r$ [fm]', fontsize=11)
+                     edgecolor='black', framealpha=1, fontsize=7)
+        ax_im.set_xlabel(r'$r$ [fm]', fontsize=9)
     else:
         ax_im.tick_params(labelbottom=False)
 
