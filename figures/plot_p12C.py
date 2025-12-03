@@ -38,7 +38,7 @@ plt.rcParams.update({
 
 # Colors (colorblind-friendly)
 col_num = '#0072B2'   # Blue for Numerov
-col_slam = '#D55E00'  # Orange for SLAM
+col_dbmm = '#D55E00'  # Orange for DBMM
 col_green = '#009E73'
 col_gold = '#E69F00'
 
@@ -77,8 +77,8 @@ plt.subplots_adjust(hspace=0.10, left=0.18, right=0.95, top=0.94, bottom=0.08)
 # |S| vs l
 ax1a.plot(l_vals, np.abs(S_num), 'o-', color=col_num, markersize=12,
           linewidth=2.5, label='Numerov', markerfacecolor=col_num)
-ax1a.plot(l_vals, np.abs(S_slam), 's--', color=col_slam, markersize=11,
-          linewidth=2.5, label='SLAM', markerfacecolor=col_slam)
+ax1a.plot(l_vals, np.abs(S_slam), 's--', color=col_dbmm, markersize=11,
+          linewidth=2.5, label='DBMM', markerfacecolor=col_dbmm)
 ax1a.set_ylabel(r'$|S_l|$')
 ax1a.set_xlim(-0.5, 10.5)
 ax1a.set_ylim(0, 1.12)
@@ -99,8 +99,8 @@ phases_slam = np.angle(S_slam) * 180 / np.pi
 
 ax1b.plot(l_vals, phases_num, 'o-', color=col_num, markersize=12,
           linewidth=2.5, label='Numerov', markerfacecolor=col_num)
-ax1b.plot(l_vals, phases_slam, 's--', color=col_slam, markersize=11,
-          linewidth=2.5, label='SLAM', markerfacecolor=col_slam)
+ax1b.plot(l_vals, phases_slam, 's--', color=col_dbmm, markersize=11,
+          linewidth=2.5, label='DBMM', markerfacecolor=col_dbmm)
 ax1b.set_xlabel(r'$l$')
 ax1b.set_ylabel(r'$\arg(S_l)$ [deg]')
 ax1b.set_xlim(-0.5, 10.5)
@@ -119,21 +119,22 @@ print('Saved: p12C_Smatrix.pdf and .eps')
 # Plot 2: Wave functions
 # =============================================================================
 
-# Use VERY LARGE fonts - 4x larger for this multi-panel figure
-fig2, axes2 = plt.subplots(3, 2, figsize=(24, 26))
-plt.subplots_adjust(hspace=0.12, wspace=0.32, left=0.10, right=0.97, top=0.92, bottom=0.06)
+# Use VERY LARGE fonts - only l=0 and l=5 (2 rows)
+l_compare_reduced = [0, 5]  # Remove l=2
+fig2, axes2 = plt.subplots(2, 2, figsize=(24, 18))
+plt.subplots_adjust(hspace=0.12, wspace=0.32, left=0.10, right=0.97, top=0.90, bottom=0.08)
 
-# 4x larger font sizes for this figure
-title_fs = 56
-label_fs = 52
-tick_fs = 46
-legend_fs = 46
-panel_fs = 52  # for (a), (b), etc.
+# Very large font sizes for this figure
+title_fs = 64
+label_fs = 58
+tick_fs = 52
+legend_fs = 52
+panel_fs = 58  # for (a), (b), etc.
 
 # Add centered title at top
 fig2.suptitle(sys_info, fontsize=title_fs, fontweight='bold')
 
-for i, l in enumerate(l_compare):
+for i, l in enumerate(l_compare_reduced):
     # Get data
     r_num = wf_num[l][:, 0]
     psi_num_re = wf_num[l][:, 1]
@@ -143,15 +144,15 @@ for i, l in enumerate(l_compare):
     psi_slam_re = wf_slam[l][:, 1]
     psi_slam_im = wf_slam[l][:, 2]
 
-    # Panel labels: (a), (b), (c), (d), (e), (f)
-    panel_labels = ['(a)', '(b)', '(c)', '(d)', '(e)', '(f)']
+    # Panel labels: (a), (b), (c), (d)
+    panel_labels = ['(a)', '(b)', '(c)', '(d)']
 
     # Real part
     ax_re = axes2[i, 0]
-    ax_re.plot(r_num, psi_num_re, '-', color=col_num, linewidth=4,
+    ax_re.plot(r_num, psi_num_re, '-', color=col_num, linewidth=4.5,
                label='Numerov' if i == 0 else '')
-    ax_re.scatter(r_slam, psi_slam_re, s=150, color=col_slam, marker='o',
-                  label='SLAM' if i == 0 else '', zorder=5, edgecolors='none')
+    ax_re.scatter(r_slam, psi_slam_re, s=180, color=col_dbmm, marker='o',
+                  label='DBMM' if i == 0 else '', zorder=5, edgecolors='none')
     ax_re.axhline(0, color='gray', linewidth=1, linestyle='--', zorder=1)
     ax_re.set_xlim(0, 15)
     ax_re.set_ylabel(rf'Re[$\psi_{l}(r)$]', fontsize=label_fs)
@@ -159,22 +160,21 @@ for i, l in enumerate(l_compare):
     ax_re.xaxis.set_minor_locator(AutoMinorLocator())
     ax_re.yaxis.set_minor_locator(AutoMinorLocator())
     # Add panel label
-    ax_re.text(0.03, 0.92, panel_labels[i*2], transform=ax_re.transAxes,
+    ax_re.text(0.03, 0.90, panel_labels[i*2], transform=ax_re.transAxes,
                fontsize=panel_fs, fontweight='bold')
-    if i == 0:
-        ax_re.legend(loc='upper right', frameon=True, fancybox=False,
-                     edgecolor='black', framealpha=1, fontsize=legend_fs)
     # Only show x label on bottom row
-    if i == 2:
+    if i == 1:
         ax_re.set_xlabel(r'$r$ [fm]', fontsize=label_fs)
     else:
         ax_re.tick_params(labelbottom=False)
 
     # Imaginary part
     ax_im = axes2[i, 1]
-    ax_im.plot(r_num, psi_num_im, '-', color=col_num, linewidth=4)
-    ax_im.scatter(r_slam, psi_slam_im, s=150, color=col_slam, marker='o',
-                  zorder=5, edgecolors='none')
+    # Add labels only for i=1 (l=5) where legend will be placed
+    ax_im.plot(r_num, psi_num_im, '-', color=col_num, linewidth=4.5,
+               label='Numerov' if i == 1 else '')
+    ax_im.scatter(r_slam, psi_slam_im, s=180, color=col_dbmm, marker='o',
+                  zorder=5, edgecolors='none', label='DBMM' if i == 1 else '')
     ax_im.axhline(0, color='gray', linewidth=1, linestyle='--', zorder=1)
     ax_im.set_xlim(0, 15)
     ax_im.set_ylabel(rf'Im[$\psi_{l}(r)$]', fontsize=label_fs)
@@ -182,10 +182,12 @@ for i, l in enumerate(l_compare):
     ax_im.xaxis.set_minor_locator(AutoMinorLocator())
     ax_im.yaxis.set_minor_locator(AutoMinorLocator())
     # Add panel label
-    ax_im.text(0.03, 0.92, panel_labels[i*2+1], transform=ax_im.transAxes,
+    ax_im.text(0.03, 0.90, panel_labels[i*2+1], transform=ax_im.transAxes,
                fontsize=panel_fs, fontweight='bold')
-    # Only show x label on bottom row
-    if i == 2:
+    # Legend in bottom-left of l=5 imaginary part panel (d)
+    if i == 1:
+        ax_im.legend(loc='lower left', frameon=True, fancybox=False,
+                     edgecolor='black', framealpha=1, fontsize=legend_fs)
         ax_im.set_xlabel(r'$r$ [fm]', fontsize=label_fs)
     else:
         ax_im.tick_params(labelbottom=False)
@@ -210,21 +212,11 @@ ax4.plot(np.cos(theta), np.sin(theta), '--', color='gray', linewidth=2.5, zorder
 # S-matrix trajectories
 ax4.plot(S_num.real, S_num.imag, 'o-', color=col_num, markersize=14,
          linewidth=3, label='Numerov', markerfacecolor=col_num, zorder=3)
-ax4.plot(S_slam.real, S_slam.imag, 's--', color=col_slam, markersize=13,
-         linewidth=3, label='SLAM', markerfacecolor=col_slam, zorder=2)
+ax4.plot(S_slam.real, S_slam.imag, 's--', color=col_dbmm, markersize=13,
+         linewidth=3, label='DBMM', markerfacecolor=col_dbmm, zorder=2)
 
-# Colors for different l values (rainbow-like)
-l_colors = {
-    0: '#E41A1C',   # red
-    1: '#FF7F00',   # orange
-    2: '#FFFF33',   # yellow
-    3: '#4DAF4A',   # green
-    4: '#377EB8',   # blue
-    5: '#984EA3',   # purple
-    6: '#A65628',   # brown
-    8: '#F781BF',   # pink
-    10: '#999999',  # gray
-}
+# Use a single color (blue) for all l labels - not black
+l_label_color = '#0072B2'  # blue
 
 # Add l labels - carefully positioned with colors
 label_pos = {
@@ -243,7 +235,7 @@ for i, l in enumerate(l_vals):
         ox, oy = label_pos[l]
         ax4.annotate(str(l), (S_slam[i].real + ox, S_slam[i].imag + oy),
                      fontsize=30, ha='left', va='center', fontweight='bold',
-                     color=l_colors.get(l, 'black'))
+                     color=l_label_color)
 
 ax4.set_xlabel(r'Re$(S_l)$')
 ax4.set_ylabel(r'Im$(S_l)$')
