@@ -175,8 +175,8 @@ print('Saved: p12C_argand.pdf and .eps')
 # =============================================================================
 
 l_compare_reduced = [0, 5]
-fig3, axes3 = plt.subplots(2, 2, figsize=(3.4, 3.2))
-plt.subplots_adjust(hspace=0.12, wspace=0.35, left=0.15, right=0.97, top=0.90, bottom=0.12)
+fig3, axes3 = plt.subplots(2, 2, figsize=(3.4, 4.0))
+plt.subplots_adjust(hspace=0.15, wspace=0.42, left=0.17, right=0.97, top=0.91, bottom=0.12)
 
 # Add centered title at top
 fig3.suptitle(sys_info, fontsize=11, fontweight='bold')
@@ -201,14 +201,14 @@ for i, l in enumerate(l_compare_reduced):
                   label='DBMM' if i == 0 else '', zorder=5, edgecolors='none')
     ax_re.axhline(0, color='gray', linewidth=0.4, linestyle='--', zorder=1)
     ax_re.set_xlim(0, 15)
-    ax_re.set_ylabel(rf'Re[$\psi_{l}(r)$]', fontsize=9)
-    ax_re.tick_params(axis='both', labelsize=8)
+    ax_re.set_ylabel(rf'Re[$\psi_{l}(r)$]', fontsize=11)
+    ax_re.tick_params(axis='both', labelsize=10)
     ax_re.xaxis.set_minor_locator(AutoMinorLocator())
     ax_re.yaxis.set_minor_locator(AutoMinorLocator())
     ax_re.text(0.05, 0.88, panel_labels[i*2], transform=ax_re.transAxes,
-               fontsize=9, fontweight='bold')
+               fontsize=11, fontweight='bold')
     if i == 1:
-        ax_re.set_xlabel(r'$r$ [fm]', fontsize=9)
+        ax_re.set_xlabel(r'$r$ [fm]', fontsize=11)
     else:
         ax_re.tick_params(labelbottom=False)
 
@@ -220,16 +220,16 @@ for i, l in enumerate(l_compare_reduced):
                   zorder=5, edgecolors='none', label='DBMM' if i == 1 else '')
     ax_im.axhline(0, color='gray', linewidth=0.4, linestyle='--', zorder=1)
     ax_im.set_xlim(0, 15)
-    ax_im.set_ylabel(rf'Im[$\psi_{l}(r)$]', fontsize=9)
-    ax_im.tick_params(axis='both', labelsize=8)
+    ax_im.set_ylabel(rf'Im[$\psi_{l}(r)$]', fontsize=11)
+    ax_im.tick_params(axis='both', labelsize=10)
     ax_im.xaxis.set_minor_locator(AutoMinorLocator())
     ax_im.yaxis.set_minor_locator(AutoMinorLocator())
     ax_im.text(0.05, 0.88, panel_labels[i*2+1], transform=ax_im.transAxes,
-               fontsize=9, fontweight='bold')
+               fontsize=11, fontweight='bold')
     if i == 1:
         ax_im.legend(loc='lower left', frameon=True, fancybox=False,
-                     edgecolor='black', framealpha=1, fontsize=7)
-        ax_im.set_xlabel(r'$r$ [fm]', fontsize=9)
+                     edgecolor='black', framealpha=1, fontsize=9)
+        ax_im.set_xlabel(r'$r$ [fm]', fontsize=11)
     else:
         ax_im.tick_params(labelbottom=False)
 
