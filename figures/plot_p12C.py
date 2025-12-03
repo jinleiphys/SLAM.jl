@@ -160,8 +160,8 @@ ax2.set_ylim(-0.6, 0.45)
 ax2.set_aspect('equal', adjustable='box')
 ax2.xaxis.set_minor_locator(AutoMinorLocator())
 ax2.yaxis.set_minor_locator(AutoMinorLocator())
-# Position legend in lower right empty area (around Re=0.5, Im=-0.4)
-ax2.legend(loc='lower right', frameon=True, fancybox=False,
+# Position legend in center-right area to avoid blocking the unit circle
+ax2.legend(loc='center right', bbox_to_anchor=(0.75, 0.25), frameon=True, fancybox=False,
            edgecolor='black', framealpha=1)
 ax2.set_title(sys_info, fontsize=11)
 
