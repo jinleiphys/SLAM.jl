@@ -160,7 +160,8 @@ ax2.set_ylim(-0.6, 0.45)
 ax2.set_aspect('equal', adjustable='box')
 ax2.xaxis.set_minor_locator(AutoMinorLocator())
 ax2.yaxis.set_minor_locator(AutoMinorLocator())
-ax2.legend(loc='upper left', frameon=True, fancybox=False,
+# Position legend at Re(S)=0.1, above the data (use bbox_to_anchor with axes coordinates)
+ax2.legend(loc='lower left', bbox_to_anchor=(0.43, 0.68), frameon=True, fancybox=False,
            edgecolor='black', framealpha=1)
 ax2.set_title(sys_info, fontsize=11)
 
