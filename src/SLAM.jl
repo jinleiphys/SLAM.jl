@@ -62,6 +62,8 @@ end
 export LagrangeMesh, init_legendre_mesh
 export lagrange_function, lagrange_derivative
 export basis_function_at_R, basis_derivative_at_R
+export basis_function_at_R_analytical, basis_derivative_at_R_analytical
+export fhat_at_boundary, dfhat_dx_at_boundary
 
 # Export Baye matrix functions
 export baye_D_matrix, baye_T_matrix, kinetic_matrix

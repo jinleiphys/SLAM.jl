@@ -148,10 +148,13 @@ function solve_scattering(prob::ScatteringProblem)
 
     # Boundary condition at r = R (row N)
     # φ'(R) - γ_s * φ(R) = 0
-    # In basis: Σ_j c_j * [f_j'(R) - γ_s * f_j(R)] = 0
+    # Using analytical formulas:
+    #   f̂_j(1) = (-1)^{N-j} / √[x_j(1-x_j)]
+    #   df̂_j/dx|_{x=1} = (-1)^{N-j}/√[x_j(1-x_j)] * [N(N+1) - x_j/(1-x_j)]
+    # Converting to r-coordinates: f_j(R) = f̂_j(1), f_j'(R) = (1/R) df̂_j/dx
     for jj in 1:N
-        f_j_R = basis_function_at_R(mesh, jj)
-        f_j_prime_R = basis_derivative_at_R(mesh, jj)
+        f_j_R = fhat_at_boundary(mesh, jj)
+        f_j_prime_R = dfhat_dx_at_boundary(mesh, jj) / R
         M[N, jj] = f_j_prime_R - γ_s * f_j_R
     end
     b[N] = 0.0
@@ -424,10 +427,10 @@ function solve_wavefunction(prob::ScatteringProblem)
     # Last mesh point F_l
     F_l_mesh[N] = coulomb_F(l, η, k * mesh.r[N])
 
-    # Boundary condition at r = R
+    # Boundary condition at r = R (using analytical formulas)
     for jj in 1:N
-        f_j_R = basis_function_at_R(mesh, jj)
-        f_j_prime_R = basis_derivative_at_R(mesh, jj)
+        f_j_R = fhat_at_boundary(mesh, jj)
+        f_j_prime_R = dfhat_dx_at_boundary(mesh, jj) / R
         M[N, jj] = f_j_prime_R - γ_s * f_j_R
     end
     b[N] = 0.0
@@ -450,8 +453,8 @@ function solve_wavefunction(prob::ScatteringProblem)
         ψ_total[i] = phase * (F_l_mesh[i] + ψ_sc[i])
     end
 
-    # Compute S-matrix
-    φ_R = sum(c[jj] * basis_function_at_R(mesh, jj) for jj in 1:N)
+    # Compute S-matrix (using analytical formula for f̂_j(1))
+    φ_R = sum(c[jj] * fhat_at_boundary(mesh, jj) for jj in 1:N)
     H_plus_R = coulomb_H_plus(l, η, ρ_R)
     f_l = φ_R / (k * H_plus_R)
     S_matrix = 1.0 + 2.0im * k * f_l

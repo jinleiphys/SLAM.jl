@@ -135,6 +135,62 @@ function basis_derivative_at_R(mesh::LagrangeMesh, j::Int)
     return (L_j_at_R / mesh.r[j] + (mesh.R / mesh.r[j]) * dL_j_at_R) / sqrt(mesh.λ[j])
 end
 
+"""
+    fhat_at_boundary(mesh::LagrangeMesh, j::Int) -> Float64
+
+Evaluate the x-regularized basis function f̂_j(x) at x = 1 (r = R) using analytical formula.
+
+From DBMM paper (Eq. 259), using P_N(1) = 1:
+    f̂_j(1) = (-1)^{N-j} / √[x_j(1-x_j)]
+
+This is the value of f̂_j defined in Eq. 195:
+    f̂_j(x) = (-1)^{N-j} √[(1-x_j)/x_j] · x·P_N(2x-1)/(x - x_j)
+
+These satisfy f̂_j(x_i) = δ_{ij}/√λ_j
+"""
+function fhat_at_boundary(mesh::LagrangeMesh, j::Int)
+    x_j = mesh.x[j]
+    sign = (-1)^(mesh.N - j)
+    return sign / sqrt(x_j * (1 - x_j))
+end
+
+"""
+    dfhat_dx_at_boundary(mesh::LagrangeMesh, j::Int) -> Float64
+
+Evaluate df̂_j/dx at x = 1 using analytical formula.
+
+From DBMM paper (Eq. 264), using P_N'(1) = N(N+1)/2:
+    df̂_j/dx|_{x=1} = (-1)^{N-j}/√[x_j(1-x_j)] * [N(N+1) - x_j/(1-x_j)]
+"""
+function dfhat_dx_at_boundary(mesh::LagrangeMesh, j::Int)
+    x_j = mesh.x[j]
+    N = mesh.N
+    sign = (-1)^(N - j)
+
+    prefactor = sign / sqrt(x_j * (1 - x_j))
+    bracket = N * (N + 1) - x_j / (1 - x_j)
+
+    return prefactor * bracket
+end
+
+"""
+    basis_function_at_R_analytical(mesh::LagrangeMesh, j::Int) -> Float64
+
+For backward compatibility - returns f̂_j(1).
+"""
+function basis_function_at_R_analytical(mesh::LagrangeMesh, j::Int)
+    return fhat_at_boundary(mesh, j)
+end
+
+"""
+    basis_derivative_at_R_analytical(mesh::LagrangeMesh, j::Int) -> Float64
+
+For backward compatibility - returns df̂_j/dx at x=1.
+"""
+function basis_derivative_at_R_analytical(mesh::LagrangeMesh, j::Int)
+    return dfhat_dx_at_boundary(mesh, j)
+end
+
 # Keep old names for compatibility
 lagrange_function(mesh, j, x_eval) = lagrange_polynomial(mesh, j, x_eval * mesh.R) * sqrt(mesh.λ[j])
 lagrange_derivative(mesh, j, x_eval) = lagrange_polynomial_derivative(mesh, j, x_eval * mesh.R) * mesh.R * sqrt(mesh.λ[j])
