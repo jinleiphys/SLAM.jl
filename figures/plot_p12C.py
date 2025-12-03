@@ -119,15 +119,19 @@ print('Saved: p12C_Smatrix.pdf and .eps')
 # Plot 2: Wave functions
 # =============================================================================
 
-# Use MUCH larger fonts specifically for this multi-panel figure
-fig2, axes2 = plt.subplots(3, 2, figsize=(20, 20))
-plt.subplots_adjust(hspace=0.10, wspace=0.35, left=0.10, right=0.97, top=0.95, bottom=0.06)
+# Use VERY LARGE fonts - 4x larger for this multi-panel figure
+fig2, axes2 = plt.subplots(3, 2, figsize=(24, 26))
+plt.subplots_adjust(hspace=0.12, wspace=0.32, left=0.10, right=0.97, top=0.92, bottom=0.06)
 
-# Double the font sizes for this figure
-title_fs = 48
-label_fs = 44
-tick_fs = 38
-legend_fs = 38
+# 4x larger font sizes for this figure
+title_fs = 56
+label_fs = 52
+tick_fs = 46
+legend_fs = 46
+panel_fs = 52  # for (a), (b), etc.
+
+# Add centered title at top
+fig2.suptitle(sys_info, fontsize=title_fs, fontweight='bold')
 
 for i, l in enumerate(l_compare):
     # Get data
@@ -139,22 +143,27 @@ for i, l in enumerate(l_compare):
     psi_slam_re = wf_slam[l][:, 1]
     psi_slam_im = wf_slam[l][:, 2]
 
+    # Panel labels: (a), (b), (c), (d), (e), (f)
+    panel_labels = ['(a)', '(b)', '(c)', '(d)', '(e)', '(f)']
+
     # Real part
     ax_re = axes2[i, 0]
-    ax_re.plot(r_num, psi_num_re, '-', color=col_num, linewidth=3.5,
+    ax_re.plot(r_num, psi_num_re, '-', color=col_num, linewidth=4,
                label='Numerov' if i == 0 else '')
-    ax_re.scatter(r_slam, psi_slam_re, s=120, color=col_slam, marker='o',
+    ax_re.scatter(r_slam, psi_slam_re, s=150, color=col_slam, marker='o',
                   label='SLAM' if i == 0 else '', zorder=5, edgecolors='none')
-    ax_re.axhline(0, color='gray', linewidth=0.8, linestyle='--', zorder=1)
+    ax_re.axhline(0, color='gray', linewidth=1, linestyle='--', zorder=1)
     ax_re.set_xlim(0, 15)
     ax_re.set_ylabel(rf'Re[$\psi_{l}(r)$]', fontsize=label_fs)
     ax_re.tick_params(axis='both', labelsize=tick_fs)
     ax_re.xaxis.set_minor_locator(AutoMinorLocator())
     ax_re.yaxis.set_minor_locator(AutoMinorLocator())
+    # Add panel label
+    ax_re.text(0.03, 0.92, panel_labels[i*2], transform=ax_re.transAxes,
+               fontsize=panel_fs, fontweight='bold')
     if i == 0:
         ax_re.legend(loc='upper right', frameon=True, fancybox=False,
                      edgecolor='black', framealpha=1, fontsize=legend_fs)
-        ax_re.set_title(sys_info + r' $-$ Real part', fontsize=title_fs)
     # Only show x label on bottom row
     if i == 2:
         ax_re.set_xlabel(r'$r$ [fm]', fontsize=label_fs)
@@ -163,17 +172,18 @@ for i, l in enumerate(l_compare):
 
     # Imaginary part
     ax_im = axes2[i, 1]
-    ax_im.plot(r_num, psi_num_im, '-', color=col_num, linewidth=3.5)
-    ax_im.scatter(r_slam, psi_slam_im, s=120, color=col_slam, marker='o',
+    ax_im.plot(r_num, psi_num_im, '-', color=col_num, linewidth=4)
+    ax_im.scatter(r_slam, psi_slam_im, s=150, color=col_slam, marker='o',
                   zorder=5, edgecolors='none')
-    ax_im.axhline(0, color='gray', linewidth=0.8, linestyle='--', zorder=1)
+    ax_im.axhline(0, color='gray', linewidth=1, linestyle='--', zorder=1)
     ax_im.set_xlim(0, 15)
     ax_im.set_ylabel(rf'Im[$\psi_{l}(r)$]', fontsize=label_fs)
     ax_im.tick_params(axis='both', labelsize=tick_fs)
     ax_im.xaxis.set_minor_locator(AutoMinorLocator())
     ax_im.yaxis.set_minor_locator(AutoMinorLocator())
-    if i == 0:
-        ax_im.set_title(sys_info + r' $-$ Imag part', fontsize=title_fs)
+    # Add panel label
+    ax_im.text(0.03, 0.92, panel_labels[i*2+1], transform=ax_im.transAxes,
+               fontsize=panel_fs, fontweight='bold')
     # Only show x label on bottom row
     if i == 2:
         ax_im.set_xlabel(r'$r$ [fm]', fontsize=label_fs)
@@ -190,36 +200,50 @@ print('Saved: p12C_wavefunction.pdf and .eps')
 # Plot 4: Argand diagram
 # =============================================================================
 
-fig4, ax4 = plt.subplots(1, 1, figsize=(9, 8))
+fig4, ax4 = plt.subplots(1, 1, figsize=(10, 9))
 plt.subplots_adjust(left=0.14, right=0.95, top=0.92, bottom=0.12)
 
 # Unit circle
 theta = np.linspace(0, 2*np.pi, 200)
-ax4.plot(np.cos(theta), np.sin(theta), '--', color='gray', linewidth=2, zorder=1, label=r'$|S|=1$')
+ax4.plot(np.cos(theta), np.sin(theta), '--', color='gray', linewidth=2.5, zorder=1, label=r'$|S|=1$')
 
 # S-matrix trajectories
-ax4.plot(S_num.real, S_num.imag, 'o-', color=col_num, markersize=13,
-         linewidth=2.5, label='Numerov', markerfacecolor=col_num, zorder=3)
-ax4.plot(S_slam.real, S_slam.imag, 's--', color=col_slam, markersize=12,
-         linewidth=2.5, label='SLAM', markerfacecolor=col_slam, zorder=2)
+ax4.plot(S_num.real, S_num.imag, 'o-', color=col_num, markersize=14,
+         linewidth=3, label='Numerov', markerfacecolor=col_num, zorder=3)
+ax4.plot(S_slam.real, S_slam.imag, 's--', color=col_slam, markersize=13,
+         linewidth=3, label='SLAM', markerfacecolor=col_slam, zorder=2)
 
-# Add l labels - carefully positioned
+# Colors for different l values (rainbow-like)
+l_colors = {
+    0: '#E41A1C',   # red
+    1: '#FF7F00',   # orange
+    2: '#FFFF33',   # yellow
+    3: '#4DAF4A',   # green
+    4: '#377EB8',   # blue
+    5: '#984EA3',   # purple
+    6: '#A65628',   # brown
+    8: '#F781BF',   # pink
+    10: '#999999',  # gray
+}
+
+# Add l labels - carefully positioned with colors
 label_pos = {
-    0: (0.08, -0.10),
-    1: (-0.18, 0.05),
-    2: (-0.16, 0.08),
-    3: (0.08, 0.09),
-    4: (0.08, 0.09),
-    5: (0.08, 0.07),
-    6: (0.07, 0.07),
-    8: (0.07, 0.06),
-    10: (0.07, -0.07),
+    0: (0.09, -0.11),
+    1: (-0.20, 0.05),
+    2: (-0.18, 0.09),
+    3: (0.09, 0.10),
+    4: (0.09, 0.10),
+    5: (0.09, 0.08),
+    6: (0.08, 0.08),
+    8: (0.08, 0.07),
+    10: (0.08, -0.08),
 }
 for i, l in enumerate(l_vals):
     if l in label_pos:
         ox, oy = label_pos[l]
         ax4.annotate(str(l), (S_slam[i].real + ox, S_slam[i].imag + oy),
-                     fontsize=20, ha='left', va='center')
+                     fontsize=30, ha='left', va='center', fontweight='bold',
+                     color=l_colors.get(l, 'black'))
 
 ax4.set_xlabel(r'Re$(S_l)$')
 ax4.set_ylabel(r'Im$(S_l)$')
@@ -231,7 +255,7 @@ ax4.yaxis.set_minor_locator(AutoMinorLocator())
 # Move legend to upper left to avoid blocking data
 ax4.legend(loc='upper left', frameon=True, fancybox=False,
            edgecolor='black', framealpha=1)
-ax4.set_title(sys_info, fontsize=26)
+ax4.set_title(sys_info, fontsize=28)
 
 fig4.savefig(os.path.join(fig_dir, 'p12C_argand.pdf'), dpi=300, bbox_inches='tight')
 fig4.savefig(os.path.join(fig_dir, 'p12C_argand.eps'), dpi=300, bbox_inches='tight')
