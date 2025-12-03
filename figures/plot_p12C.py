@@ -119,15 +119,15 @@ print('Saved: p12C_Smatrix.pdf and .eps')
 # Plot 2: Wave functions
 # =============================================================================
 
-# Use larger fonts specifically for this multi-panel figure
-fig2, axes2 = plt.subplots(3, 2, figsize=(16, 16))
-plt.subplots_adjust(hspace=0.08, wspace=0.30, left=0.10, right=0.97, top=0.94, bottom=0.06)
+# Use MUCH larger fonts specifically for this multi-panel figure
+fig2, axes2 = plt.subplots(3, 2, figsize=(20, 20))
+plt.subplots_adjust(hspace=0.10, wspace=0.35, left=0.10, right=0.97, top=0.95, bottom=0.06)
 
-# Even larger font sizes for this figure
-title_fs = 28
-label_fs = 26
-tick_fs = 22
-legend_fs = 22
+# Double the font sizes for this figure
+title_fs = 48
+label_fs = 44
+tick_fs = 38
+legend_fs = 38
 
 for i, l in enumerate(l_compare):
     # Get data
@@ -141,9 +141,9 @@ for i, l in enumerate(l_compare):
 
     # Real part
     ax_re = axes2[i, 0]
-    ax_re.plot(r_num, psi_num_re, '-', color=col_num, linewidth=2.8,
+    ax_re.plot(r_num, psi_num_re, '-', color=col_num, linewidth=3.5,
                label='Numerov' if i == 0 else '')
-    ax_re.scatter(r_slam, psi_slam_re, s=80, color=col_slam, marker='o',
+    ax_re.scatter(r_slam, psi_slam_re, s=120, color=col_slam, marker='o',
                   label='SLAM' if i == 0 else '', zorder=5, edgecolors='none')
     ax_re.axhline(0, color='gray', linewidth=0.8, linestyle='--', zorder=1)
     ax_re.set_xlim(0, 15)
@@ -163,8 +163,8 @@ for i, l in enumerate(l_compare):
 
     # Imaginary part
     ax_im = axes2[i, 1]
-    ax_im.plot(r_num, psi_num_im, '-', color=col_num, linewidth=2.8)
-    ax_im.scatter(r_slam, psi_slam_im, s=80, color=col_slam, marker='o',
+    ax_im.plot(r_num, psi_num_im, '-', color=col_num, linewidth=3.5)
+    ax_im.scatter(r_slam, psi_slam_im, s=120, color=col_slam, marker='o',
                   zorder=5, edgecolors='none')
     ax_im.axhline(0, color='gray', linewidth=0.8, linestyle='--', zorder=1)
     ax_im.set_xlim(0, 15)
