@@ -141,9 +141,10 @@ function solve_scattering(prob::ScatteringProblem)
             end
         end
 
-        # Source term uses SHORT-RANGE potential: U_short * F_l * √λ
+        # Source term uses SHORT-RANGE potential: U_short * F_l * √(R*λ)
         # Note: No exp(iσ_l) factor - it cancels in this formulation
-        b[i] = U_short_i * F_l_i * sqrt(mesh.λ[i])
+        # The √R factor comes from the wave function expansion ψ = R^{-1/2} Σ c_j f̂_j
+        b[i] = U_short_i * F_l_i * sqrt(R * mesh.λ[i])
     end
 
     # Boundary condition at r = R (row N)
@@ -163,15 +164,16 @@ function solve_scattering(prob::ScatteringProblem)
     c = M \ b
 
     # Extract scattering amplitude using direct boundary matching
-    # φ_sc(R) = Σ_j c_j * f_j(R)
-    φ_R = sum(c[jj] * basis_function_at_R(mesh, jj) for jj in 1:N)
+    # ψ_sc(R) = R^{-1/2} Σ_j c_j * f̂_j(1)
+    # Using analytical formula for f̂_j(1)
+    ψ_R = (1.0 / sqrt(R)) * sum(c[jj] * fhat_at_boundary(mesh, jj) for jj in 1:N)
 
     # H⁺_l(kR) = G_l + i*F_l (outgoing Coulomb-Hankel function)
     H_plus_R = coulomb_H_plus(l, η, ρ_R)
 
-    # Scattering amplitude: f_l = φ_sc(R) / [k * H⁺_l(kR)]
+    # Scattering amplitude: f_l = ψ_sc(R) / [k * H⁺_l(kR)]
     # Note: No exp(iσ_l) factor needed - phases cancel in this formulation
-    f_l = φ_R / (k * H_plus_R)
+    f_l = ψ_R / (k * H_plus_R)
 
     # S-matrix: S_l = 1 + 2ik*f_l
     # The phase factors are absorbed in the definition of f_l
@@ -420,8 +422,8 @@ function solve_wavefunction(prob::ScatteringProblem)
             end
         end
 
-        # Source term
-        b[i] = U_short_i * F_l_mesh[i] * sqrt(mesh.λ[i])
+        # Source term with √(R*λ) factor
+        b[i] = U_short_i * F_l_mesh[i] * sqrt(R * mesh.λ[i])
     end
 
     # Last mesh point F_l
@@ -446,17 +448,18 @@ function solve_wavefunction(prob::ScatteringProblem)
     phase = exp(im * σ_l)
 
     for i in 1:N
-        # ψ^{sc}(r_i) = c_i / √λ_i (from c_i = ψ^{sc}(r_i) * √λ_i)
-        ψ_sc[i] = c[i] / sqrt(mesh.λ[i])
+        # ψ^{sc}(r_i) = c_i / √(R*λ_i) (from c_i = ψ^{sc}(r_i) * √(R*λ_i))
+        ψ_sc[i] = c[i] / sqrt(R * mesh.λ[i])
 
         # Total wave function: ψ(r) = e^{iσ_l} [F_l + ψ^{sc}]
         ψ_total[i] = phase * (F_l_mesh[i] + ψ_sc[i])
     end
 
     # Compute S-matrix (using analytical formula for f̂_j(1))
-    φ_R = sum(c[jj] * fhat_at_boundary(mesh, jj) for jj in 1:N)
+    # ψ_sc(R) = R^{-1/2} Σ_j c_j * f̂_j(1)
+    ψ_sc_R = (1.0 / sqrt(R)) * sum(c[jj] * fhat_at_boundary(mesh, jj) for jj in 1:N)
     H_plus_R = coulomb_H_plus(l, η, ρ_R)
-    f_l = φ_R / (k * H_plus_R)
+    f_l = ψ_sc_R / (k * H_plus_R)
     S_matrix = 1.0 + 2.0im * k * f_l
 
     return WaveFunctionResult(copy(mesh.r), ψ_sc, ψ_total, F_l_mesh, c, σ_l, S_matrix)
