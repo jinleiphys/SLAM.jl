@@ -82,10 +82,12 @@ export evaluate_short_range, evaluate_total_potential
 
 # Export scattering functions
 export ScatteringProblem, ScatteringResult
+export SourceTermMethod, LAGRANGE_GAUSS, FINE_GRID
 export solve_scattering, SMatrix, cross_section
 export solve_all_partial_waves
 export elastic_differential_cross_section
 export legendre_P
+export compute_source_term_fine
 
 # Export wave function functions
 export WaveFunctionResult

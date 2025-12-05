@@ -43,6 +43,18 @@ function ScatteringProblem(pot::OpticalPotential, E_cm::Float64, l::Int;
 end
 
 """
+    SourceTermMethod
+
+Enum for selecting source term integration method.
+- `LAGRANGE_GAUSS`: Original method using Lagrange-Gauss quadrature at mesh points
+- `FINE_GRID`: Use finer grid with Lagrange basis interpolation
+"""
+@enum SourceTermMethod begin
+    LAGRANGE_GAUSS = 1
+    FINE_GRID = 2
+end
+
+"""
     ScatteringResult
 
 Structure holding the results of a scattering calculation.
@@ -60,7 +72,7 @@ struct ScatteringResult
 end
 
 """
-    solve_scattering(prob::ScatteringProblem) -> ScatteringResult
+    solve_scattering(prob::ScatteringProblem; source_method=LAGRANGE_GAUSS, n_fine=200) -> ScatteringResult
 
 Solve the scattering problem using Lagrange mesh with coefficient-space formulation.
 
@@ -82,9 +94,18 @@ Key points:
 - Phase factors e^{iσ_l} cancel out in this formulation
 - S-matrix: S = 1 + 2ik*f_l (no extra phase factor)
 
+# Arguments
+- `prob::ScatteringProblem`: The scattering problem specification
+- `source_method::SourceTermMethod`: Method for source term integration (default: LAGRANGE_GAUSS)
+  - `LAGRANGE_GAUSS`: Original Lagrange-Gauss quadrature at mesh points
+  - `FINE_GRID`: Finer grid with Lagrange basis interpolation
+- `n_fine::Int`: Number of fine grid points when using FINE_GRID method (default: 200)
+
 Reference: D. Baye, Physics Reports 565 (2015) 1-107
 """
-function solve_scattering(prob::ScatteringProblem)
+function solve_scattering(prob::ScatteringProblem;
+                          source_method::SourceTermMethod=LAGRANGE_GAUSS,
+                          n_fine::Int=200)
     pot = prob.pot
     E_cm = prob.E_cm
     l = prob.l
@@ -114,20 +135,13 @@ function solve_scattering(prob::ScatteringProblem)
     M = zeros(ComplexF64, N, N)
     b = zeros(ComplexF64, N)
 
-    # Interior points (i = 1 to N-1)
+    # Interior points (i = 1 to N-1) - Build matrix M
     for i in 1:N-1
         r_i = mesh.r[i]
-        ρ_i = k * r_i
 
         # Matrix uses FULL potential: V_full = V_nuc + V_coul_finite
-        # Source uses SHORT-RANGE potential: V_short = V_nuc + V_coul_finite - V_coul_point
         V_full_i = evaluate_total_potential(pot, r_i, l, j)
-        V_short_i = evaluate_short_range(pot, r_i, l, j)
         U_full_i = V_full_i / coeff_kin
-        U_short_i = V_short_i / coeff_kin
-
-        # Evaluate Coulomb function F_l at ρ_i
-        F_l_i = coulomb_F(l, η, ρ_i)
 
         # Centrifugal term
         cent = Float64(l * (l + 1)) / r_i^2
@@ -140,11 +154,28 @@ function solve_scattering(prob::ScatteringProblem)
                 M[i, jj] += k^2 - cent - U_full_i
             end
         end
+    end
 
-        # Source term uses SHORT-RANGE potential: U_short * F_l * √(R*λ)
-        # Note: No exp(iσ_l) factor - it cancels in this formulation
-        # The √R factor comes from the wave function expansion ψ = R^{-1/2} Σ c_j f̂_j
-        b[i] = U_short_i * F_l_i * sqrt(R * mesh.λ[i])
+    # Compute source term b based on selected method
+    if source_method == LAGRANGE_GAUSS
+        # Original method: Lagrange-Gauss quadrature at mesh points
+        # Source term: b[i] = U_short_i * F_l_i * √(R*λ_i)
+        for i in 1:N-1
+            r_i = mesh.r[i]
+            ρ_i = k * r_i
+
+            V_short_i = evaluate_short_range(pot, r_i, l, j)
+            U_short_i = V_short_i / coeff_kin
+            F_l_i = coulomb_F(l, η, ρ_i)
+
+            # Note: No exp(iσ_l) factor - it cancels in this formulation
+            # The √R factor comes from the wave function expansion ψ = R^{-1/2} Σ c_j f̂_j
+            b[i] = U_short_i * F_l_i * sqrt(R * mesh.λ[i])
+        end
+    else  # FINE_GRID
+        # Finer grid method: numerical integration with Lagrange basis interpolation
+        b_fine = compute_source_term_fine(mesh, pot, l, j, k, η, coeff_kin; n_fine=n_fine)
+        b[1:N-1] = b_fine
     end
 
     # Boundary condition at r = R (row N)
@@ -291,6 +322,122 @@ function elastic_differential_cross_section(pot::OpticalPotential, E_cm::Float64
 
     f_total = f_c + f_n
     return abs(f_total)^2 * 10.0
+end
+
+"""
+    compute_source_term_fine(mesh::LagrangeMesh, pot::OpticalPotential,
+                              l::Int, j_spin::Float64, k::Float64, η::Float64,
+                              coeff_kin::Float64; n_fine::Int=200) -> Vector{ComplexF64}
+
+Compute the source term using a finer grid for more accurate integration.
+
+The source term is:
+    b_j = ∫ U_short(r) × F_ℓ(η, kr) × f_j(r) dr
+
+Using Gauss-Legendre quadrature on a finer grid:
+    b_j ≈ Σ_k w_k × U_short(r_k) × F_ℓ(η, k×r_k) × f_j(r_k)
+
+where f_j(r) is the x-regularized Lagrange basis function evaluated at r_k
+using the analytical formula.
+
+# Arguments
+- `mesh`: The Lagrange mesh (coarse, for T matrix)
+- `pot`: Optical potential
+- `l`: Orbital angular momentum
+- `j_spin`: Total angular momentum
+- `k`: Wave number
+- `η`: Sommerfeld parameter
+- `coeff_kin`: Kinetic energy coefficient ℏ²/(2μ)
+- `n_fine`: Number of fine grid points (default 200)
+
+# Returns
+- `b`: Source term vector of length N-1 (interior points only)
+"""
+function compute_source_term_fine(mesh::LagrangeMesh, pot::OpticalPotential,
+                                   l::Int, j_spin::Float64, k::Float64, η::Float64,
+                                   coeff_kin::Float64; n_fine::Int=200)
+    N = mesh.N
+    R = mesh.R
+
+    # Initialize source term (only N-1 interior equations)
+    b = zeros(ComplexF64, N - 1)
+
+    # Create fine grid using Gauss-Legendre quadrature on (0, R)
+    t_fine, w_gl_fine = gausslegendre(n_fine)
+    # Transform from (-1,1) to (0, R)
+    r_fine = @. R * (t_fine + 1) / 2
+    w_fine = @. w_gl_fine * R / 2
+
+    # Precompute F_l and U_short at fine grid points
+    F_l_fine = zeros(Float64, n_fine)
+    U_short_fine = zeros(ComplexF64, n_fine)  # Complex for absorptive potentials
+
+    for i_fine in 1:n_fine
+        r_k = r_fine[i_fine]
+        ρ_k = k * r_k
+
+        # Skip very small ρ to avoid Coulomb function convergence issues
+        if ρ_k < 1e-6
+            F_l_fine[i_fine] = 0.0
+            U_short_fine[i_fine] = 0.0
+            continue
+        end
+
+        F_l_fine[i_fine] = coulomb_F(l, η, ρ_k)
+        V_short_k = evaluate_short_range(pot, r_k, l, j_spin)
+        U_short_fine[i_fine] = V_short_k / coeff_kin
+    end
+
+    # Compute source term for row i (equation at mesh point i)
+    # In Lagrange-Gauss collocation:
+    #   b[i] = U_short(r_i) * F_l(r_i) * √(R*λ_i)
+    # This comes from the discretization where the equation is evaluated at r_i
+    # and scaled by √(R*λ_i) for proper normalization.
+    #
+    # With fine grid integration, we compute:
+    #   b[i] = ∫ K(r, r_i) * U_short(r) * F_l(r) dr
+    # where K(r, r_i) is the kernel that selects contribution to equation i.
+    #
+    # For collocation method, K(r, r_i) = δ(r - r_i), giving:
+    #   b[i] = U_short(r_i) * F_l(r_i) * √(R*λ_i)
+    #
+    # For improved accuracy with fine grid on the source term, we can use:
+    #   b[i] = [∫ U_short(r) * F_l(r) * L_i(r) * (r/r_i) dr] / √λ_i * √R
+    # where L_i(r) is the Lagrange polynomial
+    for i in 1:(N-1)
+        integral = 0.0 + 0.0im
+
+        for i_fine in 1:n_fine
+            r_k = r_fine[i_fine]
+            w_k = w_fine[i_fine]
+
+            # Evaluate L_i(r_k) * (r_k/r_i) which appears in f_i(r) * √λ_i
+            L_i_at_rk = lagrange_polynomial(mesh, i, r_k)
+            # The x-regularized basis is f_i(r) = (r/r_i) * L_i(r) / √λ_i
+            # So f_i(r) * √λ_i = (r/r_i) * L_i(r)
+            basis_factor = (r_k / mesh.r[i]) * L_i_at_rk
+
+            # Integrand: U_short(r) * F_l(kr) * L_i(r) * (r/r_i)
+            integrand = U_short_fine[i_fine] * F_l_fine[i_fine] * basis_factor
+
+            integral += w_k * integrand
+        end
+
+        # Normalization analysis:
+        # Original Lagrange-Gauss: b[i] = U_i * F_i * √(R*λ_i)
+        #
+        # Fine grid computes: ∫ U(r) * F(r) * (r/r_i) * L_i(r) dr
+        # Using Gauss quadrature as a check:
+        #   ∫ ... dr ≈ R * λ_i * U_i * F_i * 1 = R * λ_i * U_i * F_i
+        #
+        # To match the original b[i] = √(R*λ_i) * U_i * F_i, we need:
+        #   b[i] = integral / (√R * √λ_i)
+        #
+        # Check: (R * λ_i * U_i * F_i) / (√R * √λ_i) = √R * √λ_i * U_i * F_i = √(R*λ_i) * U_i * F_i ✓
+        b[i] = integral / (sqrt(R) * sqrt(mesh.λ[i]))
+    end
+
+    return b
 end
 
 """
