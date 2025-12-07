@@ -138,19 +138,55 @@ pot = OpticalPotential(
 )
 ```
 
-### Interactive GUI
+## Graphical User Interface
 
-Launch the graphical interface:
+SLAM.jl includes an interactive web-based GUI for real-time nuclear scattering calculations. The GUI allows you to:
+
+- Adjust optical potential parameters with sliders
+- Visualize S-matrix elements on Argand diagrams
+- Plot differential cross sections vs angle
+- Display scattering wave functions
+- Compare Lagrange mesh and Numerov methods
+
+### Quick Start (Recommended)
+
+Use the provided shell scripts for the easiest setup:
 
 ```bash
+# First time: run setup to install Julia and dependencies
+./setup.sh
+
+# Launch the GUI
+./run_gui.sh
+```
+
+### Shell Scripts
+
+| Script | Description |
+|--------|-------------|
+| `setup.sh` | **One-time setup script.** Checks if Julia is installed; if not, installs it via Homebrew (macOS) or juliaup (Linux). Then installs all required Julia packages. |
+| `run_gui.sh` | **GUI launcher.** Checks for Julia installation (runs `setup.sh` if needed), then launches the interactive GUI in your default web browser. |
+
+### Manual Launch
+
+If you prefer to run manually:
+
+```bash
+# From the command line
 julia --project=. scripts/gui.jl
 ```
 
-Or from Julia:
+Or from within Julia:
 
 ```julia
 include("scripts/gui.jl")
 ```
+
+### Platform Support
+
+- **macOS**: Installs Julia via Homebrew or juliaup
+- **Linux**: Installs Julia via juliaup (curl or wget)
+- **Windows**: Manual Julia installation required; see [julialang.org/downloads](https://julialang.org/downloads/)
 
 ## Mathematical Background
 
@@ -221,10 +257,14 @@ SLAM.jl/
 │   ├── compare_*.jl      # Method comparison scripts
 │   └── debug_*.jl        # Diagnostic scripts
 ├── scripts/
-│   └── gui.jl            # Interactive GUI
+│   ├── gui.jl            # Interactive GUI application
+│   ├── run_gui.jl        # GUI entry point
+│   └── setup.jl          # Julia package installer
 ├── deps/
 │   └── libcoul90.dylib   # Compiled COUL90 library
 ├── figures/              # Generated plots
+├── setup.sh              # One-time setup (installs Julia + packages)
+├── run_gui.sh            # GUI launcher script
 └── Project.toml          # Package manifest
 ```
 
