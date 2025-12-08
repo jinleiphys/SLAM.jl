@@ -212,3 +212,92 @@ end
 function kinetic_matrix(mesh::TransformedLagrangeMesh)
     return baye_T_matrix(mesh)
 end
+
+#==============================================================================
+# Numerical derivative matrices
+#
+# These matrices are computed using Lagrange polynomial derivatives evaluated
+# at mesh points. They work for ANY mesh point distribution, including
+# coordinate-transformed meshes.
+#
+# The key insight is that for x-regularized basis functions:
+#   f_j(r) = (r/r_j) * L_j(r) / √λ_j
+#
+# The kinetic energy matrix element is:
+#   T_ij = √λ_i * (-f_j''(r_i))
+#
+# where f_j''(r) = [L_j''(r)*r/r_j + 2*L_j'(r)/r_j] / √λ_j
+==============================================================================#
+
+"""
+    numerical_D_matrix(mesh) -> Matrix{Float64}
+
+Compute the first derivative matrix numerically using Lagrange polynomial derivatives.
+
+D_{ij} = L'_j(r_i)
+
+This works for any mesh point distribution (LagrangeMesh or TransformedLagrangeMesh).
+"""
+function numerical_D_matrix(mesh)
+    N = mesh.N
+    D = zeros(Float64, N, N)
+
+    for i in 1:N
+        for j in 1:N
+            D[i, j] = lagrange_polynomial_derivative(mesh, j, mesh.r[i])
+        end
+    end
+
+    return D
+end
+
+"""
+    basis_function_second_derivative(mesh, j::Int, r_i::Float64) -> Float64
+
+Compute the second derivative of the x-regularized basis function f_j(r) at r_i.
+
+For f_j(r) = (r/r_j) * L_j(r) / √λ_j:
+    f_j''(r) = [L_j''(r)*r/r_j + 2*L_j'(r)/r_j] / √λ_j
+"""
+function basis_function_second_derivative(mesh, j::Int, r_i::Float64)
+    r_j = mesh.r[j]
+    λ_j = mesh.λ[j]
+
+    L_j_pp = lagrange_polynomial_second_derivative(mesh, j, r_i)
+    L_j_p = lagrange_polynomial_derivative(mesh, j, r_i)
+
+    return (L_j_pp * r_i / r_j + 2 * L_j_p / r_j) / sqrt(λ_j)
+end
+
+"""
+    numerical_T_matrix(mesh) -> Matrix{Float64}
+
+Compute the kinetic energy matrix numerically for x-regularized basis functions.
+
+For basis functions f_j(r) = (r/r_j) * L_j(r) / √λ_j, the T matrix elements are:
+    T_ij = √λ_i * (-f_j''(r_i))
+
+This works for any mesh point distribution (LagrangeMesh or TransformedLagrangeMesh).
+For standard Legendre mesh, this matches baye_T_matrix() to machine precision (~10⁻¹³).
+
+# Note
+This is slower than baye_T_matrix for Legendre mesh due to numerical differentiation,
+but works for arbitrary coordinate transformations where the analytical Baye formulas
+don't apply.
+
+# Reference
+D. Baye, Physics Reports 565 (2015) 1-107, Section 3.4.5
+"""
+function numerical_T_matrix(mesh)
+    N = mesh.N
+    T = zeros(Float64, N, N)
+
+    for i in 1:N
+        for j in 1:N
+            f_j_pp = basis_function_second_derivative(mesh, j, mesh.r[i])
+            T[i, j] = sqrt(mesh.λ[i]) * (-f_j_pp)
+        end
+    end
+
+    return T
+end

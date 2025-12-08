@@ -72,6 +72,7 @@ export mesh_point_distribution
 
 # Export Baye matrix functions
 export baye_D_matrix, baye_T_matrix, kinetic_matrix
+export numerical_D_matrix, numerical_T_matrix
 
 # Export Coulomb functions
 export coulomb_eta, coulomb_k

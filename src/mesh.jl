@@ -84,6 +84,8 @@ end
     lagrange_polynomial_derivative(mesh::LagrangeMesh, j::Int, r_eval::Float64) -> Float64
 
 Evaluate the derivative of the j-th Lagrange polynomial at r_eval (physical coords).
+
+L'_j(r) = Σ_{m≠j} [1/(r_j - r_m)] * ∏_{k≠j,m} (r - r_k)/(r_j - r_k)
 """
 function lagrange_polynomial_derivative(mesh::LagrangeMesh, j::Int, r_eval::Float64)
     result = 0.0
@@ -98,6 +100,44 @@ function lagrange_polynomial_derivative(mesh::LagrangeMesh, j::Int, r_eval::Floa
             result += term
         end
     end
+    return result
+end
+
+"""
+    lagrange_polynomial_second_derivative(mesh::LagrangeMesh, j::Int, r_eval::Float64) -> Float64
+
+Evaluate the second derivative of the j-th Lagrange polynomial at r_eval.
+
+L''_j(r) = Σ_{m≠j} Σ_{n≠j,m} [1/((r_j-r_m)(r_j-r_n))] * ∏_{k≠j,m,n} (r-r_k)/(r_j-r_k)
+"""
+function lagrange_polynomial_second_derivative(mesh::LagrangeMesh, j::Int, r_eval::Float64)
+    N = mesh.N
+    r = mesh.r
+    result = 0.0
+
+    for m in 1:N
+        if m == j
+            continue
+        end
+        for n in 1:N
+            if n == j || n == m
+                continue
+            end
+            # Coefficient: 1/[(r_j - r_m)(r_j - r_n)]
+            coeff = 1.0 / ((r[j] - r[m]) * (r[j] - r[n]))
+
+            # Product: ∏_{k≠j,m,n} (r - r_k)/(r_j - r_k)
+            prod = 1.0
+            for k in 1:N
+                if k != j && k != m && k != n
+                    prod *= (r_eval - r[k]) / (r[j] - r[k])
+                end
+            end
+
+            result += coeff * prod
+        end
+    end
+
     return result
 end
 
@@ -356,6 +396,43 @@ function lagrange_polynomial_derivative(mesh::TransformedLagrangeMesh, j::Int, r
     return result
 end
 
+"""
+    lagrange_polynomial_second_derivative(mesh::TransformedLagrangeMesh, j::Int, r_eval::Float64)
+
+Evaluate the second derivative of the j-th Lagrange polynomial at r_eval for transformed mesh.
+Uses the same formula as LagrangeMesh but with transformed r coordinates.
+"""
+function lagrange_polynomial_second_derivative(mesh::TransformedLagrangeMesh, j::Int, r_eval::Float64)
+    N = mesh.N
+    r = mesh.r
+    result = 0.0
+
+    for m in 1:N
+        if m == j
+            continue
+        end
+        for n in 1:N
+            if n == j || n == m
+                continue
+            end
+            # Coefficient: 1/[(r_j - r_m)(r_j - r_n)]
+            coeff = 1.0 / ((r[j] - r[m]) * (r[j] - r[n]))
+
+            # Product: ∏_{k≠j,m,n} (r - r_k)/(r_j - r_k)
+            prod = 1.0
+            for k in 1:N
+                if k != j && k != m && k != n
+                    prod *= (r_eval - r[k]) / (r[j] - r[k])
+                end
+            end
+
+            result += coeff * prod
+        end
+    end
+
+    return result
+end
+
 function basis_function_at_R(mesh::TransformedLagrangeMesh, j::Int)
     L_j_at_R = lagrange_polynomial(mesh, j, mesh.R)
     return (mesh.R / mesh.r[j]) * L_j_at_R / sqrt(mesh.λ[j])
@@ -392,6 +469,24 @@ function dfhat_dx_at_boundary(mesh::TransformedLagrangeMesh, j::Int)
     prefactor = sign / sqrt(x_j * (1 - x_j))
     bracket = N * (N + 1) - x_j / (1 - x_j)
     return prefactor * bracket
+end
+
+"""
+    basis_function_at_R_analytical(mesh::TransformedLagrangeMesh, j::Int) -> Float64
+
+For backward compatibility - returns f̂_j(1).
+"""
+function basis_function_at_R_analytical(mesh::TransformedLagrangeMesh, j::Int)
+    return fhat_at_boundary(mesh, j)
+end
+
+"""
+    basis_derivative_at_R_analytical(mesh::TransformedLagrangeMesh, j::Int) -> Float64
+
+For backward compatibility - returns df̂_j/dx at x=1.
+"""
+function basis_derivative_at_R_analytical(mesh::TransformedLagrangeMesh, j::Int)
+    return dfhat_dx_at_boundary(mesh, j)
 end
 
 """
