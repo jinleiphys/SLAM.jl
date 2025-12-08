@@ -44,6 +44,7 @@ module SLAM
 using LinearAlgebra
 using FastGaussQuadrature
 using SpecialFunctions
+using Printf
 
 # Include submodules
 include("mesh.jl")
@@ -64,6 +65,10 @@ export lagrange_function, lagrange_derivative
 export basis_function_at_R, basis_derivative_at_R
 export basis_function_at_R_analytical, basis_derivative_at_R_analytical
 export fhat_at_boundary, dfhat_dx_at_boundary
+# Transformed mesh exports
+export MeshTransform, TRANSFORM_IDENTITY, TRANSFORM_POWER, TRANSFORM_FRESCO
+export TransformedLagrangeMesh, init_transformed_mesh
+export mesh_point_distribution
 
 # Export Baye matrix functions
 export baye_D_matrix, baye_T_matrix, kinetic_matrix
