@@ -102,9 +102,20 @@ Key points:
 - `n_fine::Int`: Number of fine grid points when using FINE_GRID method (default: 200)
 
 # Tip for convergence
-For better convergence with fewer mesh points, use a smaller matching radius R
-that is just beyond the potential range. For example, if the potential is
-negligible for r > 6 fm, using R = 8-10 fm gives much better convergence than R = 15 fm.
+The Gauss-Legendre mesh has non-uniform point distribution: ~50% of points are in
+[R/2, R] region where the potential is typically negligible. For optimal efficiency:
+
+1. **Small R strategy**: If the potential is negligible for r > r₀, use R ≈ r₀ + few fm.
+   Example: potential range ~6 fm → use R = 8-10 fm with N = 30-40.
+   This gives ~40x better convergence than R = 40 fm with same N.
+
+2. **Large R requirement**: If R must be large (e.g., 40 fm for comparison with other codes),
+   more points are needed: N ~ 100-120 for good accuracy.
+
+3. **Rough guide** for |S| accuracy ~1e-3:
+   - R = 8-10 fm: N ~ 30-40
+   - R = 15 fm: N ~ 50-60
+   - R = 40 fm: N ~ 100-120
 
 Reference: D. Baye, Physics Reports 565 (2015) 1-107
 """
