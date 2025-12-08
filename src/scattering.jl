@@ -101,6 +101,11 @@ Key points:
   - `FINE_GRID`: Finer grid with Lagrange basis interpolation
 - `n_fine::Int`: Number of fine grid points when using FINE_GRID method (default: 200)
 
+# Tip for convergence
+For better convergence with fewer mesh points, use a smaller matching radius R
+that is just beyond the potential range. For example, if the potential is
+negligible for r > 6 fm, using R = 8-10 fm gives much better convergence than R = 15 fm.
+
 Reference: D. Baye, Physics Reports 565 (2015) 1-107
 """
 function solve_scattering(prob::ScatteringProblem;

@@ -368,6 +368,33 @@ function basis_derivative_at_R(mesh::TransformedLagrangeMesh, j::Int)
 end
 
 """
+    fhat_at_boundary(mesh::TransformedLagrangeMesh, j::Int) -> Float64
+
+Evaluate the x-regularized basis function f̂_j(x) at x = 1 (r = R) using analytical formula.
+Same as for LagrangeMesh since basis functions are defined in x-space.
+"""
+function fhat_at_boundary(mesh::TransformedLagrangeMesh, j::Int)
+    x_j = mesh.x[j]
+    sign = (-1)^(mesh.N - j)
+    return sign / sqrt(x_j * (1 - x_j))
+end
+
+"""
+    dfhat_dx_at_boundary(mesh::TransformedLagrangeMesh, j::Int) -> Float64
+
+Evaluate df̂_j/dx at x = 1 using analytical formula.
+Same as for LagrangeMesh since basis functions are defined in x-space.
+"""
+function dfhat_dx_at_boundary(mesh::TransformedLagrangeMesh, j::Int)
+    x_j = mesh.x[j]
+    N = mesh.N
+    sign = (-1)^(N - j)
+    prefactor = sign / sqrt(x_j * (1 - x_j))
+    bracket = N * (N + 1) - x_j / (1 - x_j)
+    return prefactor * bracket
+end
+
+"""
     mesh_point_distribution(mesh::Union{LagrangeMesh, TransformedLagrangeMesh};
                             regions=[(0,1), (1,3), (3,6), (6,10), (10,15), (15,Inf)])
 

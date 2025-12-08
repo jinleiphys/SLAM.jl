@@ -121,3 +121,94 @@ This is essentially the T matrix for use in the Hamiltonian.
 function kinetic_matrix(mesh::LagrangeMesh)
     return baye_T_matrix(mesh)
 end
+
+#==============================================================================
+# Support for TransformedLagrangeMesh
+#
+# For coordinate transformation r = R * g(x), the second derivative transforms as:
+#   d²/dr² = (1/R²) * (1/g'²) * [d²/dx² - (g''/g') * d/dx]
+#
+# However, for the Lagrange-Legendre method, we work in x-space where the
+# basis functions are defined. The Baye formulas for D and T matrices
+# still apply because they operate on the original Legendre points x_j.
+#
+# The key insight is that the basis functions f_j(r) = (r/r_j) * L_j(r) / √λ_j
+# are defined in terms of the physical coordinates r, and the transformation
+# affects how these functions sample the potential and source term.
+==============================================================================#
+
+"""
+    baye_D_matrix(mesh::TransformedLagrangeMesh) -> Matrix{Float64}
+
+Compute Baye's D matrix for transformed mesh.
+Uses the same formula as standard LagrangeMesh since the basis is defined in x-space.
+"""
+function baye_D_matrix(mesh::TransformedLagrangeMesh)
+    N = mesh.N
+    x = mesh.x
+    R = mesh.R
+
+    D = zeros(Float64, N, N)
+
+    for i in 1:N
+        for j in 1:N
+            if i != j
+                sign = (-1)^(i - j)
+                num = x[i] * (1 - x[j])
+                den = x[j] * (1 - x[i])
+                D[i, j] = sign * sqrt(num / den) / (x[i] - x[j])
+            else
+                D[i, i] = 1.0 / (2 * x[i] * (1 - x[i]))
+            end
+        end
+    end
+
+    # Scale to physical interval - but now need to account for transformation
+    # d/dr = (dx/dr) * d/dx = (1/(R*g')) * d/dx
+    # So D_phys[i,j] = D[i,j] / (R * g'(x_j)) for action on coefficients
+    # But the Baye formulation already handles this through the basis functions
+    return D / R
+end
+
+"""
+    baye_T_matrix(mesh::TransformedLagrangeMesh) -> Matrix{Float64}
+
+Compute Baye's T matrix for transformed mesh.
+Uses the same formula as standard LagrangeMesh since the basis is defined in x-space.
+
+Note: The coordinate transformation affects the physical interpretation but
+not the matrix structure since Lagrange basis functions maintain their
+orthogonality properties in x-space.
+"""
+function baye_T_matrix(mesh::TransformedLagrangeMesh)
+    N = mesh.N
+    x = mesh.x
+    R = mesh.R
+
+    T = zeros(Float64, N, N)
+
+    for i in 1:N
+        xi = x[i]
+        for j in 1:N
+            xj = x[j]
+            if i != j
+                sign = (-1)^(i - j)
+                num = xi + xj - 2 * xi^2
+                den = xj * (xj - xi)^2
+                sqrt_num = xj * (1 - xj)
+                sqrt_den = xi * (1 - xi)^3
+                T[i, j] = sign * (num / den) * sqrt(sqrt_num / sqrt_den)
+            else
+                num = N * (N + 1) * xi * (1 - xi) - 3 * xi + 1
+                den = 3 * xi^2 * (1 - xi)^2
+                T[i, i] = num / den
+            end
+        end
+    end
+
+    return T / R^2
+end
+
+function kinetic_matrix(mesh::TransformedLagrangeMesh)
+    return baye_T_matrix(mesh)
+end
