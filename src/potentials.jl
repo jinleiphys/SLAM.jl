@@ -33,6 +33,9 @@ U(r) = V_central(r) + V_surface(r) + V_spin_orbit(r) + V_coulomb(r)
 - `a_ws::Float64`: Imaginary surface diffuseness (fm)
 
 ## Spin-orbit (Thomas form)
+U_so(r) = (ħ/m_π c)² (V_so + i W_so) (1/r) df/dr (l·σ), with (ħ/m_π c)² = 2 fm² and
+l·σ = 2 l·s = j(j+1) - l(l+1) - s(s+1). This is the KD02 / FRESCO (TYPE=3) / COLOSS convention,
+so KD02 depths can be passed in directly.
 - `V_so::Float64`: Real spin-orbit depth (MeV)
 - `r_so::Float64`: Real spin-orbit radius parameter (fm)
 - `a_so::Float64`: Real spin-orbit diffuseness (fm)
@@ -236,17 +239,18 @@ function evaluate_potential(pot::OpticalPotential, r::Float64, l::Int, j::Float6
     df_ws = woods_saxon_derivative(r, R_ws, pot.a_ws)
     V_surface = 4.0 * pot.V_s * pot.a_s * df_s + im * 4.0 * pot.W_s * pot.a_ws * df_ws
 
-    # Spin-orbit term:
-    # V_so = 2 * V_so * df_so/r * ls + 2i * W_so * df_wso/r * ls
-    # where ls = [J(J+1) - l(l+1) - S(S+1)] / 2
+    # Spin-orbit term (KD02 / FRESCO TYPE=3 / COLOSS convention):
+    # V_so = (ħ/m_π c)² * (V_so + i W_so) * (1/r) df/dr * (l·σ)
+    # with (ħ/m_π c)² = 2 fm² and l·σ = 2 l·s = J(J+1) - l(l+1) - S(S+1).
+    # Before 2026-10-28 this used l·s instead of l·σ, so the spin-orbit was half the KD02 value.
     s = 0.5
-    ls = 0.5 * (j*(j+1) - l*(l+1) - s*(s+1))
+    two_ls = j*(j+1) - l*(l+1) - s*(s+1)
 
     V_spinorbit = 0.0 + 0.0im
     if r > 1e-6
         df_so = woods_saxon_derivative(r, R_so, pot.a_so) / r
         df_wso = woods_saxon_derivative(r, R_wso, pot.a_wso) / r
-        V_spinorbit = 2.0 * pot.V_so * df_so * ls + im * 2.0 * pot.W_so * df_wso * ls
+        V_spinorbit = 2.0 * pot.V_so * df_so * two_ls + im * 2.0 * pot.W_so * df_wso * two_ls
     end
 
     return V_volume + V_surface + V_spinorbit

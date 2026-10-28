@@ -62,8 +62,8 @@ function main()
 
     # Spin-orbit
     s = 0.5
-    ls = 0.5 * (j*(j+1) - l*(l+1) - s*(s+1))
-    println("ls = 0.5 * ($(j)*($(j)+1) - $(l)*($(l)+1) - 0.5*1.5) = $(ls)")
+    ls = j*(j+1) - l*(l+1) - s*(s+1)   # l·σ = 2 l·s (KD02 convention)
+    println("l·σ = $(j)*($(j)+1) - $(l)*($(l)+1) - 0.5*1.5 = $(ls)")
 
     df_so = woods_saxon_derivative(r, R_so, pot.a_so) / r
     df_wso = woods_saxon_derivative(r, R_wso, pot.a_wso) / r
